@@ -172,6 +172,30 @@ fn player_movement(
     }
 }
 
+// take actionstate from remote confirmed players, use it to move the predicted player
+#[allow(clippy::type_complexity)]
+fn remote_player_movement(
+    tick_manager: Res<TickManager>,
+    confirmed_players: Query<(&Confirmed, &ActionState<PlayerActions>)>,
+    mut predicted_players: Query<
+        (Entity, &mut LinearVelocity),
+        (Without<ActionState<PlayerActions>>, With<Predicted>),
+    >,
+) {
+    for (confirmed, action_state) in confirmed_players.iter() {
+        if let Ok((e, velocity)) = predicted_players.get_mut(confirmed.predicted.unwrap()) {
+            if !action_state.get_pressed().is_empty() {
+                info!(
+                    "Applying movement to remote player {e:?}: {:?} @ {:?}",
+                    action_state.get_pressed(),
+                    tick_manager.tick()
+                );
+                shared_movement_behaviour(velocity, action_state);
+            }
+        }
+    }
+}
+
 // When the predicted copy of the client-owned entity is spawned, do stuff
 // - assign it a different saturation
 // - keep track of it in the Global resource

@@ -191,6 +191,7 @@ pub(crate) fn check_rollback<C: SyncComponent>(
                    "Rollback check: mismatch for component between predicted and confirmed {:?} on tick {:?} for component {:?}. Current tick: {:?}",
                    confirmed_entity, tick, kind, current_tick
                    );
+                // bevy::prelude::warn!("ROLLBACK: mismatch for component between predicted and confirmed {:?} on tick {:?} for component {:?}. Current tick: {:?}", confirmed_entity, tick, kind, current_tick);
                 // we already rolled-back the state for the entity's latest_tick
                 // after this we will start right away with a physics update, so we need to start taking the inputs from the next tick
                 rollback.set_rollback_tick(tick + 1);
@@ -501,6 +502,12 @@ pub(crate) fn run_rollback(world: &mut World) {
     debug!(
         "Rollback between {:?} and {:?}",
         current_rollback_tick, current_tick
+    );
+
+    bevy::prelude::warn!(
+        "🛼 Rollback between {:?} and {:?}",
+        current_rollback_tick,
+        current_tick
     );
 
     // run the physics fixed update schedule (which should contain ALL predicted/rollback components)
