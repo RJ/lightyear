@@ -33,7 +33,7 @@ pub struct ExampleServerPlugin {
 
 impl Plugin for ExampleServerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(TokenServer {
+        app.add_plugins(TokenServerPlugin {
             netcode_params: self.netcode_params.clone(),
         });
         app.add_systems(Startup, (init, start_server));

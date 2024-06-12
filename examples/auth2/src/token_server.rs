@@ -20,11 +20,11 @@ use lightyear::prelude::server::*;
 use lightyear::prelude::ClientId::Netcode;
 use lightyear::prelude::*;
 
-pub struct TokenServer {
+pub struct TokenServerPlugin {
     pub netcode_params: NetcodeParams,
 }
 
-impl Plugin for TokenServer {
+impl Plugin for TokenServerPlugin {
     fn build(&self, app: &mut App) {
         let www_state = NetcodeState::new(self.netcode_params.clone());
         app.insert_resource(www_state.clone());
@@ -67,14 +67,14 @@ fn handle_connect_events(
     }
 }
 
-#[derive(Deserialize)]
-struct TokenRequest {
-    name: String,
+#[derive(Serialize, Deserialize)]
+pub(crate) struct TokenRequest {
+    pub(crate) name: String,
 }
 
-#[derive(Serialize)]
-struct TokenResponse {
-    token: String,
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub(crate) struct TokenResponse {
+    pub(crate) token: String,
 }
 
 async fn www_root(State(_netstate): State<NetcodeState>) -> &'static str {
@@ -129,6 +129,7 @@ impl NetcodeState {
                 break client_id;
             }
         };
+        // could encode json here with geoip country or whatever
         let user_data = string_to_user_data(crate::name_generator::sanitise_name(client_id, name))
             .unwrap_or([0u8; USER_DATA_BYTES]);
         Ok(ConnectToken::build(
@@ -141,8 +142,6 @@ impl NetcodeState {
         .user_data(user_data)
         .generate()
         .expect("Failed to generate token"))
-
-        // let serialized_token = token.try_into_bytes().expect("Failed to serialize token");
     }
 
     pub fn client_connected(&mut self, client_id: u64) {

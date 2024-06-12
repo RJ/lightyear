@@ -26,52 +26,23 @@ use tokio::io::AsyncReadExt;
 use crate::protocol::*;
 use crate::shared;
 
+use crate::token_client::*;
+
 pub struct ExampleClientPlugin {
     pub auth_backend_address: SocketAddr,
 }
 
 impl Plugin for ExampleClientPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(ConnectTokenRequestTask {
-            auth_backend_addr: self.auth_backend_address,
-            task: None,
-        });
+        app.add_plugins(TokenClientPlugin);
         app.add_systems(Startup, spawn_connect_button);
         app.add_systems(PreUpdate, handle_connection.after(MainSet::Receive));
         app.add_systems(Update, button_system);
-        app.add_systems(Update, fetch_connect_token);
         app.add_systems(OnEnter(NetworkingState::Disconnected), on_disconnect);
     }
 }
 
 ///
-
-/// Holds a handle to an io task that is requesting a `ConnectToken` from the backend
-#[derive(Resource)]
-struct ConnectTokenRequestTask {
-    auth_backend_addr: SocketAddr,
-    task: Option<Task<ConnectToken>>,
-}
-
-/// If we have a io task that is waiting for a `ConnectToken`, we poll the task until completion,
-/// then we retrieve the token and connect to the game server
-fn fetch_connect_token(
-    mut connect_token_request: ResMut<ConnectTokenRequestTask>,
-    mut client_config: ResMut<ClientConfig>,
-    mut commands: Commands,
-) {
-    if let Some(task) = &mut connect_token_request.task {
-        if let Some(connect_token) = block_on(future::poll_once(task)) {
-            // if we have received the connect token, update the `ClientConfig` to use it to connect
-            // to the game server
-            if let NetConfig::Netcode { auth, .. } = &mut client_config.net {
-                *auth = Authentication::Token(connect_token);
-            }
-            commands.connect_client();
-            connect_token_request.task = None;
-        }
-    }
-}
 
 /// Component to identify the text displaying the client id
 #[derive(Component)]
@@ -96,36 +67,6 @@ pub(crate) fn handle_connection(
             ),
             ClientIdText,
         ));
-    }
-}
-
-/// Get a ConnectToken via a TCP connection to the authentication server
-async fn get_connect_token_from_auth_backend(auth_backend_address: SocketAddr) -> ConnectToken {
-    let stream = tokio::net::TcpStream::connect(auth_backend_address)
-        .await
-        .expect(
-            format!(
-                "Failed to connect to authentication server on {:?}",
-                auth_backend_address
-            )
-            .as_str(),
-        );
-    // wait for the socket to be readable
-    stream.readable().await.unwrap();
-    let mut buffer = [0u8; CONNECT_TOKEN_BYTES];
-    match stream.try_read(&mut buffer) {
-        Ok(n) if n == CONNECT_TOKEN_BYTES => {
-            trace!(
-                "Received token bytes: {:?}. Token len: {:?}",
-                buffer,
-                buffer.len()
-            );
-            ConnectToken::try_from_bytes(&buffer)
-                .expect("Failed to parse token from authentication server")
-        }
-        _ => {
-            panic!("Failed to read token from authentication server")
-        }
     }
 }
 
@@ -201,27 +142,11 @@ fn button_system(
             match state.get() {
                 NetworkingState::Disconnected => {
                     text.sections[0].value = "Connect".to_string();
-                    *on_click = On::<Pointer<Click>>::run(
-                        |mut commands: Commands,
-                         config: Res<ClientConfig>,
-                         mut task_state: ResMut<ConnectTokenRequestTask>| {
-                            if let NetConfig::Netcode { auth, .. } = &config.net {
-                                // if we have a connect token, try to connect to the game server
-                                if auth.has_token() {
-                                    commands.connect_client();
-                                    return;
-                                } else {
-                                    let auth_backend_addr = task_state.auth_backend_addr;
-                                    let task =
-                                        IoTaskPool::get().spawn_local(Compat::new(async move {
-                                            get_connect_token_from_auth_backend(auth_backend_addr)
-                                                .await
-                                        }));
-                                    task_state.task = Some(task);
-                                }
-                            }
-                        },
-                    );
+                    *on_click = On::<Pointer<Click>>::run(|commands: Commands| {
+                        commands.request_connect_token_and_connect(
+                            "http://localhost:3000/token-please",
+                        );
+                    });
                 }
                 NetworkingState::Connecting => {
                     text.sections[0].value = "Connecting".to_string();

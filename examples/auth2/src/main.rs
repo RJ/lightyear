@@ -26,6 +26,7 @@ mod name_generator;
 mod protocol;
 mod server;
 mod shared;
+mod token_client;
 mod token_server;
 
 fn main() {
