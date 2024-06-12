@@ -22,7 +22,6 @@ use serde::{Deserialize, Serialize};
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 mod client;
-mod name_generator;
 mod protocol;
 mod server;
 mod shared;

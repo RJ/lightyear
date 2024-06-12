@@ -78,7 +78,7 @@ pub(crate) struct TokenResponse {
 }
 
 async fn www_root(State(_netstate): State<NetcodeState>) -> &'static str {
-    "Hello"
+    "This is the token server"
 }
 
 async fn www_token_please(
@@ -130,8 +130,8 @@ impl NetcodeState {
             }
         };
         // could encode json here with geoip country or whatever
-        let user_data = string_to_user_data(crate::name_generator::sanitise_name(client_id, name))
-            .unwrap_or([0u8; USER_DATA_BYTES]);
+        let user_data =
+            string_to_user_data(sanitise_name(client_id, name)).unwrap_or([0u8; USER_DATA_BYTES]);
         Ok(ConnectToken::build(
             params.game_server_addr,
             params.protocol_id,
@@ -157,7 +157,17 @@ impl NetcodeState {
     }
 }
 
+/// a token effort to sanitise silly names
+fn sanitise_name(id: u64, name: String) -> String {
+    if name.trim().is_empty() || name.contains('\n') || name.len() > 15 {
+        format!("Player {id}").to_string()
+    } else {
+        name.trim().to_string()
+    }
+}
+
 /// copy string into fixed len array for netcode user data field
+/// (probably better serializing some json in here, as we add fields like IP/country)
 fn string_to_user_data(input: String) -> Result<[u8; USER_DATA_BYTES], ()> {
     let mut output = [0u8; USER_DATA_BYTES];
     let bytes = input.into_bytes();

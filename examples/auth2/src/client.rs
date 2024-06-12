@@ -42,8 +42,6 @@ impl Plugin for ExampleClientPlugin {
     }
 }
 
-///
-
 /// Component to identify the text displaying the client id
 #[derive(Component)]
 pub struct ClientIdText;
@@ -70,16 +68,23 @@ pub(crate) fn handle_connection(
     }
 }
 
+#[derive(Component)]
+struct ConnectButtonTextMarker;
+
+#[derive(Component)]
+struct ConnectButtonParentMarker;
+
 /// Create a button that allow you to connect/disconnect to a server
 pub(crate) fn spawn_connect_button(mut commands: Commands) {
     commands
         .spawn((
+            ConnectButtonParentMarker,
             NodeBundle {
                 style: Style {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
-                    align_items: AlignItems::FlexEnd,
-                    justify_content: JustifyContent::FlexEnd,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
                     flex_direction: FlexDirection::Row,
                     ..default()
                 },
@@ -109,6 +114,7 @@ pub(crate) fn spawn_connect_button(mut commands: Commands) {
                 ))
                 .with_children(|parent| {
                     parent.spawn((
+                        ConnectButtonTextMarker,
                         TextBundle::from_section(
                             "Connect",
                             TextStyle {
@@ -133,15 +139,19 @@ fn on_disconnect(mut commands: Commands, debug_text: Query<Entity, With<ClientId
 ///  System that will assign a callback to the 'Connect' button depending on the connection state.
 fn button_system(
     mut interaction_query: Query<(Entity, &Children, &mut On<Pointer<Click>>), With<Button>>,
-    mut text_query: Query<&mut Text>,
+    mut text_query: Query<&mut Text, With<ConnectButtonTextMarker>>,
+    mut style_query: Query<&mut Style, With<ConnectButtonParentMarker>>,
     state: Res<State<NetworkingState>>,
 ) {
     if state.is_changed() {
         for (entity, children, mut on_click) in &mut interaction_query {
             let mut text = text_query.get_mut(children[0]).unwrap();
+            let mut style = style_query.get_single_mut().expect("needs style");
             match state.get() {
                 NetworkingState::Disconnected => {
                     text.sections[0].value = "Connect".to_string();
+                    style.align_items = AlignItems::Center;
+                    style.justify_content = JustifyContent::Center;
                     *on_click = On::<Pointer<Click>>::run(|commands: Commands| {
                         commands.request_connect_token_and_connect(
                             "http://localhost:3000/token-please",
@@ -150,10 +160,14 @@ fn button_system(
                 }
                 NetworkingState::Connecting => {
                     text.sections[0].value = "Connecting".to_string();
+                    style.align_items = AlignItems::Center;
+                    style.justify_content = JustifyContent::Center;
                     *on_click = On::<Pointer<Click>>::run(|| {});
                 }
                 NetworkingState::Connected => {
                     text.sections[0].value = "Disconnect".to_string();
+                    style.align_items = AlignItems::FlexStart;
+                    style.justify_content = JustifyContent::FlexEnd;
                     *on_click = On::<Pointer<Click>>::run(
                         |mut commands: Commands, mut config: ResMut<ClientConfig>| {
                             commands.disconnect_client();
