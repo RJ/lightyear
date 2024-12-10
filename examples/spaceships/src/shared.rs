@@ -19,7 +19,7 @@ use lightyear::transport::io::IoDiagnosticsPlugin;
 use lightyear_examples_common::shared::FIXED_TIMESTEP_HZ;
 
 use crate::protocol::*;
-#[cfg(feature = "client")]
+#[cfg(feature = "gui")]
 use crate::renderer::SpaceshipsRendererPlugin;
 
 pub(crate) const MAX_VELOCITY: f32 = 200.0;
@@ -41,8 +41,7 @@ pub struct SharedPlugin {
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
-
-        #[cfg(feature = "client")]
+        #[cfg(feature = "gui")]
         app.add_plugins(SpaceshipsRendererPlugin);
 
         // bundles

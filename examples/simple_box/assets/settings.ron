@@ -34,7 +34,8 @@ Settings(
         )),
         transport: [
             WebTransport(
-                local_port: 5000
+                local_port: 5000,
+                certificate: AutoSelfSigned(["localhost", "127.0.0.1"]),
             ),
             Udp(
                 local_port: 5001

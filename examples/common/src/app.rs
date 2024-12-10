@@ -150,16 +150,15 @@ impl Apps {
                     transport_config,
                 );
                 let (mut client_app, client_config) = client_app(settings.clone(), net_config);
-                client_app.add_plugins(ExampleRendererPlugin);
+                // client_app.add_plugins(ExampleRendererPlugin);
 
                 // create server app
                 let extra_transport_configs = vec![server::ServerTransport::Channels {
                     // even if we communicate via channels, we need to provide a socket address for the client
                     channels: vec![(LOCAL_SOCKET, to_server_recv, from_server_send)],
                 }];
-                let (mut server_app, mut server_config) =
-                    server_app(settings, extra_transport_configs);
-                server_app.add_plugins(ExampleRendererPlugin);
+                let (mut server_app, server_config) = server_app(settings, extra_transport_configs);
+                // server_app.add_plugins(ExampleRendererPlugin);
                 Apps::ClientAndServer {
                     client_app,
                     client_config,
@@ -169,6 +168,7 @@ impl Apps {
             }
             #[cfg(feature = "server")]
             Cli::Server => {
+                #[allow(unused_mut)]
                 let (mut app, config) = server_app(settings, vec![]);
                 #[cfg(feature = "gui")]
                 app.add_plugins(ExampleRendererPlugin);
@@ -383,11 +383,33 @@ impl Apps {
     }
 }
 
-/// Build the client app with the `ClientPlugins` added.
-/// Takes in a `net_config` parameter so that we configure the network transport.
-fn client_app(settings: Settings, net_config: client::NetConfig) -> (App, ClientConfig) {
-    let mut app = App::new();
+fn window_plugin() -> WindowPlugin {
+    WindowPlugin {
+        primary_window: Some(Window {
+            title: "Lightyear Examples".to_owned(),
+            resolution: (1024., 768.).into(),
+            present_mode: bevy::window::PresentMode::AutoVsync,
+            // Tells wasm to resize the window according to the available canvas
+            fit_canvas_to_parent: true,
+            // set to true if we want to capture tab etc in wasm
+            prevent_default_event_handling: false,
+            ..Default::default()
+        }),
+        ..default()
+    }
+}
 
+fn log_plugin() -> LogPlugin {
+    LogPlugin {
+        level: Level::INFO,
+        filter: "wgpu=error,bevy_render=info,bevy_ecs=warn".to_string(),
+        ..default()
+    }
+}
+
+fn new_gui_app() -> App {
+    info!("new_gui_app");
+    let mut app = App::new();
     app.add_plugins(
         DefaultPlugins
             .build()
@@ -396,12 +418,42 @@ fn client_app(settings: Settings, net_config: client::NetConfig) -> (App, Client
                 meta_check: bevy::asset::AssetMetaCheck::Never,
                 ..default()
             })
-            .set(LogPlugin {
-                level: Level::INFO,
-                filter: "wgpu=error,bevy_render=info,bevy_ecs=warn".to_string(),
-                ..default()
-            }),
+            .set(log_plugin())
+            .set(window_plugin()),
     );
+    app
+}
+
+fn new_gui_app_server() -> App {
+    info!("new_gui_app_server");
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins);
+    //     DefaultPlugins
+    //         .build()
+    //         // .set(AssetPlugin {
+    //         //     // https://github.com/bevyengine/bevy/issues/10157
+    //         //     meta_check: bevy::asset::AssetMetaCheck::Never,
+    //         //     ..default()
+    //         // })
+    //         .set(log_plugin())
+    //         .set(window_plugin()),
+    // );
+    app
+}
+
+fn new_headless_app() -> App {
+    info!("new_headless_app");
+    let mut app = App::new();
+    app.add_plugins((MinimalPlugins, log_plugin(), StatesPlugin, HierarchyPlugin));
+    app
+}
+
+/// Build the client app with the `ClientPlugins` added.
+/// Takes in a `net_config` parameter so that we configure the network transport.
+#[cfg(feature = "client")]
+fn client_app(settings: Settings, net_config: client::NetConfig) -> (App, ClientConfig) {
+    let app = new_gui_app();
+
     let client_config = ClientConfig {
         shared: shared_config(Mode::Separate),
         net: net_config,
@@ -415,22 +467,16 @@ fn client_app(settings: Settings, net_config: client::NetConfig) -> (App, Client
 }
 
 /// Build the server app with the `ServerPlugins` added.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(feature = "server")]
 fn server_app(
     settings: Settings,
     extra_transport_configs: Vec<server::ServerTransport>,
 ) -> (App, ServerConfig) {
-    let mut app = App::new();
-    if !settings.server.headless {
-        app.add_plugins(DefaultPlugins.build().disable::<LogPlugin>());
-    } else {
-        app.add_plugins((MinimalPlugins, StatesPlugin));
-    }
-    app.add_plugins(LogPlugin {
-        level: Level::INFO,
-        filter: "wgpu=error,bevy_render=info,bevy_ecs=warn".to_string(),
-        ..default()
-    });
+    info!("server_app. gui={}", cfg!(feature = "gui"));
+    #[cfg(feature = "gui")]
+    let app = new_gui_app_server();
+    #[cfg(not(feature = "gui"))]
+    let app = new_headless_app();
 
     // configure the network configuration
     let mut net_configs = get_server_net_configs(&settings);
@@ -451,19 +497,13 @@ fn server_app(
 }
 
 /// An `App` that contains both the client and server plugins
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(feature = "client", feature = "server"))]
 fn combined_app(
     settings: Settings,
     extra_transport_configs: Vec<server::ServerTransport>,
     client_net_config: client::NetConfig,
 ) -> (App, ClientConfig, ServerConfig) {
-    let mut app = App::new();
-    app.add_plugins(DefaultPlugins.build().set(LogPlugin {
-        level: Level::INFO,
-        filter: "wgpu=error,bevy_render=info,bevy_ecs=warn".to_string(),
-        ..default()
-    }));
-
+    let app = new_gui_app();
     // server config
     let mut net_configs = get_server_net_configs(&settings);
     let extra_net_configs = extra_transport_configs.into_iter().map(|c| {

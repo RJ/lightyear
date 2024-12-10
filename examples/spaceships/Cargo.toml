@@ -13,11 +13,11 @@ publish = false
 default = ["server"]
 metrics = ["lightyear/metrics", "dep:metrics-exporter-prometheus"]
 client = ["lightyear_examples_common/client", "dep:bevy_screen_diagnostics", "gui"]
-gui = ["lightyear_examples_common/gui"]
+gui = ["lightyear_examples_common/gui", "dep:bevy_screen_diagnostics"]
 server = ["lightyear_examples_common/server"]
 
 [dependencies]
-lightyear_examples_common = { path = "../common", default-features = false, features = ["server", "webtransport", "websocket"] }
+lightyear_examples_common = { workspace = true, features = ["webtransport", "websocket"] }
 bevy_screen_diagnostics = {workspace = true, optional = true}
 leafwing-input-manager.workspace = true
 avian2d = { workspace = true, features = [

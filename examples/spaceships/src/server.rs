@@ -34,6 +34,10 @@ pub struct Global {
 
 impl Plugin for ExampleServerPlugin {
     fn build(&self, app: &mut App) {
+        // Avian's `ColliderHierarchyPlugin` requires Bevy's `HierarchyPlugin` to function.
+        if !app.is_plugin_added::<HierarchyPlugin>() {
+            app.add_plugins(HierarchyPlugin);
+        }
         app.insert_resource(Global {
             predict_all: self.predict_all,
         });

@@ -17,9 +17,9 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "client")]
 mod client;
-#[cfg(feature = "client")]
+#[cfg(feature = "gui")]
 mod entity_label;
-#[cfg(feature = "client")]
+#[cfg(feature = "gui")]
 mod renderer;
 
 mod protocol;
