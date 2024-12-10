@@ -69,6 +69,17 @@
 //! [`ClientConfig`]: lightyear::client::config::ClientConfig
 //! [`ServerConfig`]: lightyear::prelude::server::ServerConfig
 
+// Check feature combo sanity, to make it easier to cfg out code by just checking one feature.
+// For example, don't allow "steam" to be set on wasm builds, because it can't work in wasm anyway.
+
+#[cfg(all(feature = "steam", target_family = "wasm"))]
+compile_error!("steam feature is not supported in wasm");
+
+#[cfg(all(feature = "server", target_family = "wasm"))]
+compile_error!("server feature is not supported in wasm");
+
 pub mod app;
+#[cfg(feature = "gui")]
+pub mod renderer;
 pub mod settings;
 pub mod shared;
