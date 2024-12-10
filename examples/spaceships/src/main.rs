@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 use std::time::Duration;
 
+#[cfg(feature = "client")]
 use crate::client::ExampleClientPlugin;
 use crate::server::ExampleServerPlugin;
 use crate::shared::SharedPlugin;
@@ -14,10 +15,14 @@ use lightyear_examples_common::app::{Apps, Cli};
 use lightyear_examples_common::settings::{read_settings, Settings};
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "client")]
 mod client;
+#[cfg(feature = "client")]
 mod entity_label;
-mod protocol;
+#[cfg(feature = "client")]
 mod renderer;
+
+mod protocol;
 mod server;
 mod shared;
 
@@ -42,15 +47,15 @@ fn main() {
     // add `ClientPlugins` and `ServerPlugins` plugin groups
     apps.add_lightyear_plugins();
     // add our plugins
-    apps.add_user_plugins(
-        ExampleClientPlugin,
-        ExampleServerPlugin {
-            predict_all: settings.predict_all,
-        },
-        SharedPlugin {
-            show_confirmed: settings.show_confirmed,
-        },
-    );
+    apps.add_user_shared_plugin(SharedPlugin {
+        show_confirmed: settings.show_confirmed,
+    });
+    #[cfg(feature = "client")]
+    apps.add_user_client_plugin(ExampleClientPlugin);
+    #[cfg(feature = "server")]
+    apps.add_user_server_plugin(ExampleServerPlugin {
+        predict_all: settings.predict_all,
+    });
     // run the app
     apps.run();
 }

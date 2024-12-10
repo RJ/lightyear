@@ -2,6 +2,8 @@
 
 This folder contains various examples that showcase various `lightyear` features.
 
+The top level `Cargo.toml` workspace defines the deps that examples can use and pick features from.
+
 
 ## Easy
 

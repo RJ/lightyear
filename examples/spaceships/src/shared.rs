@@ -1,7 +1,6 @@
 use bevy::diagnostic::LogDiagnosticsPlugin;
 use bevy::ecs::query::QueryData;
 use bevy::prelude::*;
-use bevy::render::RenderPlugin;
 use bevy::utils::Duration;
 use lightyear::inputs::leafwing::input_buffer::InputBuffer;
 use server::ControlledEntities;
@@ -19,11 +18,12 @@ use lightyear::shared::ping::diagnostics::PingDiagnosticsPlugin;
 use lightyear::transport::io::IoDiagnosticsPlugin;
 use lightyear_examples_common::shared::FIXED_TIMESTEP_HZ;
 
-use crate::{protocol::*, renderer};
+use crate::protocol::*;
+#[cfg(feature = "client")]
+use crate::renderer::SpaceshipsRendererPlugin;
+
 pub(crate) const MAX_VELOCITY: f32 = 200.0;
 pub(crate) const WALL_SIZE: f32 = 350.0;
-
-use crate::renderer::SpaceshipsRendererPlugin;
 
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum FixedSet {
@@ -41,9 +41,10 @@ pub struct SharedPlugin {
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
-        if app.is_plugin_added::<RenderPlugin>() {
-            app.add_plugins(SpaceshipsRendererPlugin);
-        }
+
+        #[cfg(feature = "client")]
+        app.add_plugins(SpaceshipsRendererPlugin);
+
         // bundles
         app.add_systems(Startup, init);
 

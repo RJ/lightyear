@@ -15,7 +15,7 @@ use async_compat::Compat;
 use bevy::tasks::IoTaskPool;
 
 use lightyear::prelude::client::Authentication;
-#[cfg(not(target_family = "wasm"))]
+#[cfg(all(feature = "steam", not(target_family = "wasm")))]
 use lightyear::prelude::client::{SocketConfig, SteamConfig};
 use lightyear::prelude::{CompressionConfig, LinkConditionerConfig};
 
@@ -34,7 +34,7 @@ pub enum ClientTransports {
         certificate_digest: String,
     },
     WebSocket,
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(feature = "steam")]
     Steam {
         app_id: u32,
     },
@@ -47,11 +47,12 @@ pub enum ServerTransports {
     },
     WebTransport {
         local_port: u16,
+        certificate: WebTransportCertificateSettings,
     },
     WebSocket {
         local_port: u16,
     },
-    #[cfg(not(target_family = "wasm"))]
+    #[cfg(feature = "steam")]
     Steam {
         app_id: u32,
         server_ip: Ipv4Addr,
@@ -80,7 +81,7 @@ impl Conditioner {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ServerSettings {
     /// If true, disable any rendering-related plugins
     pub(crate) headless: bool,
@@ -131,7 +132,7 @@ pub struct SharedSettings {
     pub(crate) compression: CompressionConfig,
 }
 
-#[derive(Resource, Debug, Clone, Deserialize, Serialize)]
+#[derive(Resource, Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub server: ServerSettings,
     pub client: ClientSettings,
@@ -144,12 +145,10 @@ pub(crate) fn build_server_netcode_config(
     shared: &SharedSettings,
     transport_config: server::ServerTransport,
 ) -> server::NetConfig {
-    let conditioner = conditioner.map_or(None, |c| {
-        Some(LinkConditionerConfig {
-            incoming_latency: Duration::from_millis(c.latency_ms as u64),
-            incoming_jitter: Duration::from_millis(c.jitter_ms as u64),
-            incoming_loss: c.packet_loss,
-        })
+    let conditioner = conditioner.map(|c| LinkConditionerConfig {
+        incoming_latency: Duration::from_millis(c.latency_ms as u64),
+        incoming_jitter: Duration::from_millis(c.jitter_ms as u64),
+        incoming_loss: c.packet_loss,
     });
     let netcode_config = server::NetcodeConfig::default()
         .with_protocol_id(shared.protocol_id)
@@ -162,6 +161,59 @@ pub(crate) fn build_server_netcode_config(
     server::NetConfig::Netcode {
         config: netcode_config,
         io: io_config,
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+pub enum WebTransportCertificateSettings {
+    /// Lightyear will generate a self-signed certificate, with given SANs list.
+    AutoSelfSigned(Vec<String>),
+    /// Lightyear will load certificate pem files from disk
+    FromFile {
+        cert_pem_path: String,
+        private_key_pem_path: String,
+    },
+}
+
+impl Default for WebTransportCertificateSettings {
+    fn default() -> Self {
+        let sans = vec![
+            "localhost".to_string(),
+            "127.0.0.1".to_string(),
+            "::1".to_string(),
+        ];
+        WebTransportCertificateSettings::AutoSelfSigned(sans)
+    }
+}
+
+impl From<&WebTransportCertificateSettings> for server::Identity {
+    fn from(wt: &WebTransportCertificateSettings) -> server::Identity {
+        match wt {
+            WebTransportCertificateSettings::AutoSelfSigned(sans) => {
+                println!("🔐 Creating self-signed certificate with SANs: {:?}", sans);
+                server::Identity::self_signed(sans).unwrap()
+            }
+            WebTransportCertificateSettings::FromFile {
+                cert_pem_path,
+                private_key_pem_path,
+            } => {
+                // this is async because we need to load the certificate from io
+                // we need async_compat because wtransport expects a tokio reactor
+                let identity = IoTaskPool::get()
+                    .scope(|s| {
+                        s.spawn(Compat::new(async {
+                            server::Identity::load_pemfiles(cert_pem_path, private_key_pem_path)
+                                .await
+                                .unwrap()
+                        }));
+                    })
+                    .pop()
+                    .unwrap();
+                let digest = identity.certificate_chain().as_slice()[0].hash();
+                println!("Generated self-signed certificate with digest: {}", digest);
+                identity
+            }
+        }
     }
 }
 
@@ -182,31 +234,18 @@ pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConf
                     *local_port,
                 )),
             ),
-            ServerTransports::WebTransport { local_port } => {
-                // this is async because we need to load the certificate from io
-                // we need async_compat because wtransport expects a tokio reactor
-                let certificate = IoTaskPool::get()
-                    .scope(|s| {
-                        s.spawn(Compat::new(async {
-                            server::Identity::load_pemfiles(
-                                "../certificates/cert.pem",
-                                "../certificates/key.pem",
-                            )
-                            .await
-                            .unwrap()
-                        }));
-                    })
-                    .pop()
-                    .unwrap();
-                let digest = certificate.certificate_chain().as_slice()[0].hash();
-                println!("Generated self-signed certificate with digest: {}", digest);
+            ServerTransports::WebTransport {
+                local_port,
+                certificate,
+            } => {
+                let transport_config = server::ServerTransport::WebTransportServer {
+                    server_addr: SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), *local_port),
+                    certificate: certificate.into(),
+                };
                 build_server_netcode_config(
                     settings.server.conditioner.as_ref(),
                     &settings.shared,
-                    server::ServerTransport::WebTransportServer {
-                        server_addr: SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), *local_port),
-                        certificate,
-                    },
+                    transport_config,
                 )
             }
             ServerTransports::WebSocket { local_port } => build_server_netcode_config(
@@ -216,6 +255,7 @@ pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConf
                     server_addr: SocketAddr::new(Ipv4Addr::UNSPECIFIED.into(), *local_port),
                 },
             ),
+            #[cfg(feature = "steam")]
             ServerTransports::Steam {
                 app_id,
                 server_ip,
@@ -233,11 +273,7 @@ pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConf
                     max_clients: 16,
                     ..default()
                 },
-                conditioner: settings
-                    .server
-                    .conditioner
-                    .as_ref()
-                    .map_or(None, |c| Some(c.build())),
+                conditioner: settings.server.conditioner.as_ref().map(|c| c.build()),
             },
         })
         .collect()
@@ -251,7 +287,7 @@ pub(crate) fn build_client_netcode_config(
     shared: &SharedSettings,
     transport_config: client::ClientTransport,
 ) -> client::NetConfig {
-    let conditioner = conditioner.map_or(None, |c| Some(c.build()));
+    let conditioner = conditioner.map(|c| c.build());
     let auth = Authentication::Manual {
         server_addr,
         client_id,
@@ -307,18 +343,14 @@ pub fn get_client_net_config(settings: &Settings, client_id: u64) -> client::Net
             &settings.shared,
             client::ClientTransport::WebSocketClient { server_addr },
         ),
-        #[cfg(not(target_family = "wasm"))]
+        #[cfg(feature = "steam")]
         ClientTransports::Steam { app_id } => client::NetConfig::Steam {
             steamworks_client: None,
             config: SteamConfig {
                 socket_config: SocketConfig::Ip { server_addr },
                 app_id: *app_id,
             },
-            conditioner: settings
-                .server
-                .conditioner
-                .as_ref()
-                .map_or(None, |c| Some(c.build())),
+            conditioner: settings.server.conditioner.as_ref().map(|c| c.build()),
         },
     }
 }
