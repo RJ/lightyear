@@ -15,7 +15,7 @@ use async_compat::Compat;
 use bevy::tasks::IoTaskPool;
 
 use lightyear::prelude::client::Authentication;
-#[cfg(all(feature = "steam", not(target_family = "wasm")))]
+#[cfg(feature = "steam")]
 use lightyear::prelude::client::{SocketConfig, SteamConfig};
 use lightyear::prelude::{CompressionConfig, LinkConditionerConfig};
 
@@ -81,7 +81,7 @@ impl Conditioner {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct ServerSettings {
     /// If true, disable any rendering-related plugins
     pub(crate) headless: bool,

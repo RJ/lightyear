@@ -427,17 +427,17 @@ fn new_gui_app() -> App {
 fn new_gui_app_server() -> App {
     info!("new_gui_app_server");
     let mut app = App::new();
-    app.add_plugins(DefaultPlugins);
-    //     DefaultPlugins
-    //         .build()
-    //         // .set(AssetPlugin {
-    //         //     // https://github.com/bevyengine/bevy/issues/10157
-    //         //     meta_check: bevy::asset::AssetMetaCheck::Never,
-    //         //     ..default()
-    //         // })
-    //         .set(log_plugin())
-    //         .set(window_plugin()),
-    // );
+    app.add_plugins(
+        DefaultPlugins
+            .build()
+            .set(AssetPlugin {
+                // https://github.com/bevyengine/bevy/issues/10157
+                meta_check: bevy::asset::AssetMetaCheck::Never,
+                ..default()
+            })
+            .set(log_plugin())
+            .set(window_plugin()),
+    );
     app
 }
 
@@ -472,12 +472,20 @@ fn server_app(
     settings: Settings,
     extra_transport_configs: Vec<server::ServerTransport>,
 ) -> (App, ServerConfig) {
-    info!("server_app. gui={}", cfg!(feature = "gui"));
-    #[cfg(feature = "gui")]
-    let app = new_gui_app_server();
-    #[cfg(not(feature = "gui"))]
-    let app = new_headless_app();
+    use cfg_if::cfg_if;
 
+    info!("server_app. gui={}", cfg!(feature = "gui"));
+    // If there's a client app, the server needs to be headless.
+    // Winit doesn't support two event loops in the same thread.
+    cfg_if::cfg_if! {
+        if #[cfg(feature = "client")] {
+            let app = new_headless_app();
+        } else if #[cfg(feature = "gui")] {
+            let app = new_gui_app();
+        } else {
+            let app = new_headless_app();
+        }
+    }
     // configure the network configuration
     let mut net_configs = get_server_net_configs(&settings);
     let extra_net_configs = extra_transport_configs.into_iter().map(|c| {
