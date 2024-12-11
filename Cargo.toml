@@ -181,6 +181,8 @@ bevy = { version = "0.14", default-features = false, features = [
   
 ] }
 
+bevy_mod_picking = { version = "0.20", features = ["backend_bevy_ui"] }
+
 # input
 leafwing-input-manager = {version = "0.15", default-features = false, features = ["keyboard"]}
 

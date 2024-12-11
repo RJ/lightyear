@@ -1,0 +1,31 @@
+FROM metabrew/rust-chef-sccache:latest AS builder
+# names of examples to build servers for
+ARG examples="simple_box spaceships"
+
+WORKDIR /app
+COPY . .
+# The contents of /app/bins will become /app in the last stage of the Dockerfile
+# and will contain just what we need to run the server, and none of the other source bits.
+RUN mkdir /app/bins
+# Prepare launcher, to make edgegap configuration easier:
+RUN cd examples/launcher && cargo build --release && cp ../../target/release/launcher /app/bins/ 
+# For each example, build it and copy the binary and assets to the /app/bins dir
+RUN for example in ${examples} ; do \
+    echo "building $example......" && \
+    cargo build --release --no-default-features -F server -p $example && \
+    mkdir -p /app/bins/$example && \
+    cp /app/target/release/$example /app/bins/$example/ && \
+    cp -r examples/$example/assets /app/bins/$example/ && \
+    echo "Finished building $example, find:" && \
+    find /app/bins ; \
+    done
+RUN find /app/bins
+
+# Final stage: Create minimal image, copy over new bins dir
+# use the :debug version so we have busybox - we want the shell for the launcher.
+# TODO a very simple rust launcher would allow us to avoid a shell altogther.
+FROM gcr.io/distroless/cc-debian12:debug
+COPY --from=builder /app/bins /app
+RUN find /app
+WORKDIR /app
+ENTRYPOINT ["/app/launcher"]

@@ -139,7 +139,7 @@ fn add_player_label(
             VisibilityBundle::default(),
             TransformBundle::default(),
             EntityLabel {
-                text: format!("{}\n{}", player.nickname, score.0),
+                text: format!("{} <{}>", player.nickname, score.0),
                 color: css::ANTIQUE_WHITE.with_alpha(0.8).into(),
                 offset: Vec2::Y * -45.0,
                 ..Default::default()
@@ -171,7 +171,7 @@ fn update_player_label(
         } else {
             0
         };
-        label.text = format!("{}\n{}", player.nickname, score.0);
+        label.text = format!("{} <{}>", player.nickname, score.0);
         label.sub_text = format!(
             "{}~{}ms [{num_buffered_inputs}]",
             player.rtt.as_millis(),
@@ -212,7 +212,6 @@ fn setup_diagnostic(mut onscreen: ResMut<ScreenDiagnostics>) {
 }
 
 /// System that draws the outlines of confirmed entities, with lines to the centre of their predicted location.
-#[allow(clippy::type_complexity)]
 pub(crate) fn draw_confirmed_shadows(
     mut gizmos: Gizmos,
     confirmed_q: Query<
@@ -242,7 +241,6 @@ pub(crate) fn draw_confirmed_shadows(
 }
 
 /// System that draws the player's boxes and cursors
-#[allow(clippy::type_complexity)]
 fn draw_predicted_entities(
     mut gizmos: Gizmos,
     predicted: Query<
@@ -319,7 +317,6 @@ fn draw_walls(walls: Query<&Wall, Without<Player>>, mut gizmos: Gizmos) {
 
 /// Draws confirmed entities that have colliders.
 /// Only useful on the server
-#[allow(clippy::type_complexity)]
 fn draw_confirmed_entities(
     mut gizmos: Gizmos,
     confirmed: Query<

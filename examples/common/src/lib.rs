@@ -83,6 +83,9 @@ compile_error!("server feature is not supported in wasm");
 #[cfg(all(feature = "client", not(feature = "gui")))]
 compile_error!("client feature requires gui feature");
 
+#[cfg(all(not(feature = "client"), not(feature = "server")))]
+compile_error!("One of server, client features must be enabled");
+
 pub mod app;
 #[cfg(feature = "gui")]
 pub mod renderer;

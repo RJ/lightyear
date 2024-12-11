@@ -150,15 +150,14 @@ impl Apps {
                     transport_config,
                 );
                 let (mut client_app, client_config) = client_app(settings.clone(), net_config);
-                // client_app.add_plugins(ExampleRendererPlugin);
+                client_app.add_plugins(ExampleRendererPlugin);
 
-                // create server app
+                // create server app, which will be headless when we have client app in same process
                 let extra_transport_configs = vec![server::ServerTransport::Channels {
                     // even if we communicate via channels, we need to provide a socket address for the client
                     channels: vec![(LOCAL_SOCKET, to_server_recv, from_server_send)],
                 }];
-                let (mut server_app, server_config) = server_app(settings, extra_transport_configs);
-                // server_app.add_plugins(ExampleRendererPlugin);
+                let (server_app, server_config) = server_app(settings, extra_transport_configs);
                 Apps::ClientAndServer {
                     client_app,
                     client_config,
@@ -251,6 +250,7 @@ impl Apps {
         self
     }
 
+    /// Adds plugin to the client app
     pub fn add_user_client_plugin(&mut self, client_plugin: impl Plugin) -> &mut Self {
         match self {
             Apps::Client { app, .. } => {
@@ -267,6 +267,7 @@ impl Apps {
         self
     }
 
+    /// Adds plugin to the server app
     pub fn add_user_server_plugin(&mut self, server_plugin: impl Plugin) -> &mut Self {
         match self {
             Apps::Client { .. } => {}
@@ -283,6 +284,7 @@ impl Apps {
         self
     }
 
+    /// Adds plugin to both the server and client apps, if present
     pub fn add_user_shared_plugin(&mut self, shared_plugin: impl Plugin + Clone) -> &mut Self {
         match self {
             Apps::Client { app, config } => {
@@ -301,6 +303,31 @@ impl Apps {
             }
             Apps::Server { app, .. } => {
                 app.add_plugins(shared_plugin);
+            }
+        }
+        self
+    }
+
+    /// Adds to the client app, and the server app if in standalone server mode with the cargo "gui" feature.
+    /// Won't add renderer to server app if a client app also present.
+    pub fn add_user_renderer_plugin(&mut self, renderer_plugin: impl Plugin) -> &mut Self {
+        match self {
+            Apps::Client { app, config } => {
+                app.add_plugins(renderer_plugin);
+            }
+            Apps::ClientAndServer {
+                server_app,
+                client_app,
+                ..
+            } => {
+                client_app.add_plugins(renderer_plugin);
+            }
+            Apps::HostServer { app, .. } => {
+                app.add_plugins(renderer_plugin);
+            }
+            Apps::Server { app, .. } => {
+                #[cfg(feature = "gui")]
+                app.add_plugins(renderer_plugin);
             }
         }
         self
@@ -392,7 +419,7 @@ fn window_plugin() -> WindowPlugin {
             // Tells wasm to resize the window according to the available canvas
             fit_canvas_to_parent: true,
             // set to true if we want to capture tab etc in wasm
-            prevent_default_event_handling: false,
+            prevent_default_event_handling: true,
             ..Default::default()
         }),
         ..default()

@@ -13,9 +13,8 @@ license = "MIT OR Apache-2.0"
 exclude = ["/tests"]
 
 [features]
-default = ["steam", "webtransport", "websocket", "client", "server", "gui"]
+default = ["steam", "websocket", "client", "server", "gui"]
 steam = ["lightyear/steam"]
-webtransport = ["lightyear/webtransport"]
 websocket = ["lightyear/websocket"]
 server = []
 client = ["gui"]
@@ -23,6 +22,8 @@ client = ["gui"]
 gui = [
     "bevy/bevy_asset",
     "bevy/bevy_render",
+    "bevy/bevy_pbr",
+    "bevy/bevy_scene",
     "bevy/bevy_core_pipeline",
     "bevy/bevy_gizmos",
     "bevy/tonemapping_luts",
@@ -39,7 +40,7 @@ gui = [
 ]
 
 [dependencies]
-lightyear.workspace = true
+lightyear = { workspace = true, features = ["webtransport"] }
 anyhow.workspace = true
 async-compat.workspace = true
 cfg-if.workspace = true
@@ -49,6 +50,9 @@ rand.workspace = true
 serde.workspace = true
 bevy.workspace = true
 #bevy-inspector-egui = {workspace = true, optional = true}
+
+[target."cfg(target_family = \"wasm\")".dependencies]
+web-sys = {workspace = true, features = [ "Window", "Location" ]}
 
 [lints]
 workspace = true

@@ -126,12 +126,12 @@ fn add_bullet_physics(
 fn handle_new_player(
     connection: Res<ClientConnection>,
     mut commands: Commands,
-    mut player_query: Query<(Entity, Has<Controlled>), (Added<Predicted>, With<Player>)>,
+    mut player_query: Query<(Entity, &Player, Has<Controlled>), Added<Predicted>>,
 ) {
-    for (entity, is_controlled) in player_query.iter_mut() {
+    for (entity, player, is_controlled) in player_query.iter_mut() {
         // is this our own entity?
         if is_controlled {
-            info!("Own player replicated to us, adding inputmap {entity:?}");
+            info!("Own player replicated to us, adding inputmap {entity:?} {player:?}");
             commands.entity(entity).insert(InputMap::new([
                 (PlayerActions::Up, KeyCode::ArrowUp),
                 (PlayerActions::Down, KeyCode::ArrowDown),
@@ -144,7 +144,7 @@ fn handle_new_player(
                 (PlayerActions::Fire, KeyCode::Space),
             ]));
         } else {
-            info!("Remote player replicated to us: {entity:?}");
+            info!("Remote player replicated to us: {entity:?} {player:?}");
         }
         let client_id = connection.id();
         info!(?entity, ?client_id, "adding physics to predicted player");

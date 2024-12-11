@@ -37,12 +37,12 @@ Settings(
                 local_port: 5000,
                 certificate: AutoSelfSigned(["localhost", "127.0.0.1"]),
             ),
-            Udp(
-                local_port: 5001
-            ),
-            WebSocket(
-                local_port: 5002
-            ),
+            // Udp(
+            //     local_port: 5001
+            // ),
+            // WebSocket(
+            //     local_port: 5002
+            // ),
             // Steam(
             //     app_id: 480,
             //     server_ip: "0.0.0.0",

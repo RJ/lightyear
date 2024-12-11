@@ -29,7 +29,9 @@ mod shared;
 fn main() {
     let cli = Cli::default();
     let settings_str = include_str!("../assets/settings.ron");
-    let settings = read_settings::<MySettings>(settings_str);
+    let mut settings = read_settings::<MySettings>(settings_str);
+    #[cfg(target_family = "wasm")]
+    lightyear_examples_common::settings::modify_digest_on_wasm(&mut settings.common.client);
     // build the bevy app (this adds common plugin such as the DefaultPlugins)
     // and returns the `ClientConfig` and `ServerConfig` so that we can modify them if needed
     let mut apps = Apps::new(settings.common, cli).with_server_replication_send_interval(
@@ -56,6 +58,8 @@ fn main() {
     apps.add_user_server_plugin(ExampleServerPlugin {
         predict_all: settings.predict_all,
     });
+    #[cfg(feature = "gui")]
+    apps.add_user_renderer_plugin(renderer::SpaceshipsRendererPlugin);
     // run the app
     apps.run();
 }

@@ -41,8 +41,6 @@ pub struct SharedPlugin {
 impl Plugin for SharedPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(ProtocolPlugin);
-        #[cfg(feature = "gui")]
-        app.add_plugins(SpaceshipsRendererPlugin);
 
         // bundles
         app.add_systems(Startup, init);

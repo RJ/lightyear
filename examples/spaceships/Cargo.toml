@@ -10,15 +10,16 @@ rust-version = "1.76"
 publish = false
 
 [features]
-default = ["server"]
+default = ["server", "client"]
 metrics = ["lightyear/metrics", "dep:metrics-exporter-prometheus"]
 client = ["lightyear_examples_common/client", "dep:bevy_screen_diagnostics", "gui"]
 gui = ["lightyear_examples_common/gui", "dep:bevy_screen_diagnostics"]
 server = ["lightyear_examples_common/server"]
 
 [dependencies]
-lightyear_examples_common = { workspace = true, features = ["webtransport", "websocket"] }
+lightyear_examples_common.workspace = true
 bevy_screen_diagnostics = {workspace = true, optional = true}
+metrics-exporter-prometheus = { workspace = true, optional = true }
 leafwing-input-manager.workspace = true
 avian2d = { workspace = true, features = [
   "2d",
@@ -28,7 +29,6 @@ avian2d = { workspace = true, features = [
   "serialize",
 ] }
 lightyear = { workspace = true,  features = [
-  "webtransport",
   "leafwing",
   "avian2d",
 ] }
@@ -38,7 +38,6 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 bevy.workspace = true
 rand.workspace = true
-metrics-exporter-prometheus = { workspace = true, optional = true }
 
-[lints.clippy]
-type_complexity = "allow"
+[lints]
+workspace = true

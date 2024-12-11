@@ -4,6 +4,7 @@
 use std::net::{Ipv4Addr, SocketAddr};
 
 use bevy::asset::ron;
+use bevy::prelude::info;
 use bevy::prelude::{default, Resource};
 use bevy::utils::Duration;
 use serde::de::DeserializeOwned;
@@ -26,6 +27,48 @@ pub fn read_settings<T: DeserializeOwned>(settings_str: &str) -> T {
     ron::de::from_str::<T>(settings_str).expect("Could not deserialize the settings file")
 }
 
+/// Read certificate digest from alternate sources, for WASM builds.
+#[cfg(target_family = "wasm")]
+#[allow(unreachable_patterns)]
+pub fn modify_digest_on_wasm(client_settings: &mut ClientSettings) -> Option<String> {
+    if let Some(new_digest) = get_digest_on_wasm() {
+        match &client_settings.transport {
+            ClientTransports::WebTransport { certificate_digest } => {
+                client_settings.transport = ClientTransports::WebTransport {
+                    certificate_digest: new_digest.clone(),
+                };
+                Some(new_digest)
+            }
+            // This could be unreachable if only WebTransport feature is enabled.
+            // hence we supress this warning with the allow directive above.
+            _ => None,
+        }
+    } else {
+        None
+    }
+}
+
+#[cfg(target_family = "wasm")]
+fn get_digest_on_wasm() -> Option<String> {
+    let window = web_sys::window().expect("expected window");
+
+    if let Ok(obj) = window.location().hash() {
+        info!("Using cert digest from window.location().hash()");
+        let cd = obj.replace("#", "");
+        if cd.len() > 10 {
+            // lazy sanity check.
+            return Some(cd);
+        }
+    }
+
+    if let Some(obj) = window.get("CERT_DIGEST") {
+        info!("Using cert digest from window.CERT_DIGEST");
+        return Some(obj.as_string().expect("CERT_DIGEST should be a string"));
+    }
+
+    None
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ClientTransports {
     #[cfg(not(target_family = "wasm"))]
@@ -33,6 +76,7 @@ pub enum ClientTransports {
     WebTransport {
         certificate_digest: String,
     },
+    #[cfg(feature = "websocket")]
     WebSocket,
     #[cfg(feature = "steam")]
     Steam {
@@ -49,6 +93,7 @@ pub enum ServerTransports {
         local_port: u16,
         certificate: WebTransportCertificateSettings,
     },
+    #[cfg(feature = "websocket")]
     WebSocket {
         local_port: u16,
     },
@@ -166,9 +211,9 @@ pub(crate) fn build_server_netcode_config(
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum WebTransportCertificateSettings {
-    /// Lightyear will generate a self-signed certificate, with given SANs list.
+    /// Generate a self-signed certificate, with given SANs list.
     AutoSelfSigned(Vec<String>),
-    /// Lightyear will load certificate pem files from disk
+    /// Load certificate pem files from disk
     FromFile {
         cert_pem_path: String,
         private_key_pem_path: String,
@@ -186,12 +231,16 @@ impl Default for WebTransportCertificateSettings {
     }
 }
 
+#[cfg(feature = "server")]
 impl From<&WebTransportCertificateSettings> for server::Identity {
     fn from(wt: &WebTransportCertificateSettings) -> server::Identity {
         match wt {
             WebTransportCertificateSettings::AutoSelfSigned(sans) => {
-                println!("🔐 Creating self-signed certificate with SANs: {:?}", sans);
-                server::Identity::self_signed(sans).unwrap()
+                let identity = server::Identity::self_signed(sans).unwrap();
+                let digest = identity.certificate_chain().as_slice()[0].hash();
+                println!("Generating self-signed certificate with SANs: {:?}", sans);
+                println!("🔐 Certificate digest: {digest}");
+                identity
             }
             WebTransportCertificateSettings::FromFile {
                 cert_pem_path,
@@ -209,8 +258,12 @@ impl From<&WebTransportCertificateSettings> for server::Identity {
                     })
                     .pop()
                     .unwrap();
+                println!(
+                    "Reading certificate PEM files:\n * cert: {}\n * key: {}",
+                    cert_pem_path, private_key_pem_path
+                );
                 let digest = identity.certificate_chain().as_slice()[0].hash();
-                println!("Generated self-signed certificate with digest: {}", digest);
+                println!("🔐 Certificate digest: {digest}");
                 identity
             }
         }
@@ -219,7 +272,7 @@ impl From<&WebTransportCertificateSettings> for server::Identity {
 
 /// Parse the settings into a list of `NetConfig` that are used to configure how the lightyear server
 /// listens for incoming client connections
-#[cfg(not(target_family = "wasm"))]
+#[cfg(feature = "server")]
 pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConfig> {
     settings
         .server
@@ -248,6 +301,7 @@ pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConf
                     transport_config,
                 )
             }
+            #[cfg(feature = "websocket")]
             ServerTransports::WebSocket { local_port } => build_server_netcode_config(
                 settings.server.conditioner.as_ref(),
                 &settings.shared,
@@ -336,6 +390,7 @@ pub fn get_client_net_config(settings: &Settings, client_id: u64) -> client::Net
                 certificate_digest: certificate_digest.to_string().replace(":", ""),
             },
         ),
+        #[cfg(feature = "websocket")]
         ClientTransports::WebSocket => build_client_netcode_config(
             client_id,
             server_addr,

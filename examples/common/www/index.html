@@ -6,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="data:,">
-    <title>Spaceships Example</title>
+    <title>Lightyear example: {{name}}</title>
     <style>
         body,
         html {
@@ -29,7 +29,7 @@
 
 <body>
     <script type="module">
-        import init from './spaceships.js'
+        import init from './{{name}}.js'
 
         init().catch((error) => {
             if (!error.message.startsWith("Using exceptions for control flow, don't mind me. This isn't actually an error!")) {
