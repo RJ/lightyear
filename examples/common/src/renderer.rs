@@ -9,6 +9,9 @@ impl Plugin for ExampleRendererPlugin {
         // TODO handle bevygap ui things.
         // TODO for clients, provide a "connect" button?
         app.add_systems(Startup, spawn_text);
+
+        #[cfg(feature = "server")]
+        app.add_systems(Startup, spawn_server_text);
     }
 }
 
@@ -17,4 +20,22 @@ fn spawn_text(mut commands: Commands) {
         "This is the Example Renderer!",
         TextStyle::default(),
     ));
+}
+
+/// Spawns a text element that displays "Server"
+fn spawn_server_text(mut commands: Commands) {
+    commands.spawn(
+        TextBundle::from_section(
+            "Server",
+            TextStyle {
+                font_size: 30.0,
+                color: Color::WHITE,
+                ..default()
+            },
+        )
+        .with_style(Style {
+            align_self: AlignSelf::End,
+            ..default()
+        }),
+    );
 }

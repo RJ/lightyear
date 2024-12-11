@@ -22,8 +22,9 @@ pub struct ExampleServerPlugin;
 impl Plugin for ExampleServerPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ClientEntityMap>();
-        app.add_systems(Startup, (init, start_server));
+        app.add_systems(Startup, start_server);
         // the physics/FixedUpdates systems that consume inputs should be run in this set.
+        #[cfg(feature = "gui")]
         app.add_systems(FixedUpdate, movement);
         app.add_systems(Update, (send_message, handle_connections));
     }
@@ -37,24 +38,6 @@ pub struct ClientEntityMap(HashMap<ClientId, Entity>);
 /// Start the server
 fn start_server(mut commands: Commands) {
     commands.start_server();
-}
-
-/// Add some debugging text to the screen
-fn init(mut commands: Commands) {
-    commands.spawn(
-        TextBundle::from_section(
-            "Server",
-            TextStyle {
-                font_size: 30.0,
-                color: Color::WHITE,
-                ..default()
-            },
-        )
-        .with_style(Style {
-            align_self: AlignSelf::End,
-            ..default()
-        }),
-    );
 }
 
 /// Server connection system, create a player upon connection
@@ -114,6 +97,7 @@ pub(crate) fn handle_disconnections(
 }
 
 /// Read client inputs and move players in server therefore giving a basis for other clients
+#[cfg(feature = "gui")]
 fn movement(
     mut position_query: Query<&mut PlayerPosition>,
     entity_map: Res<ClientEntityMap>,

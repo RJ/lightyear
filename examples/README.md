@@ -70,3 +70,13 @@ commands:
 - You then have to replace the certificate digest in the `assets/settings.ron` file with the one that the server printed
   out.
 - then start the client wasm test with `trunk serve`
+
+## Building for Edgegap
+
+```bash
+# building the game server container
+docker build -t examples -f examples/Dockerfile.server --progress=plain --build-arg examples=simple_box .
+
+# and to run, specify the example name as an env:
+docker run --rm -it -e EXAMPLE_NAME=simple_box examples
+```
