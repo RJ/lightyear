@@ -10,7 +10,7 @@ RUN mkdir /app/bins
 # Prepare launcher, to make edgegap configuration easier:
 RUN cd examples/launcher && cargo build --release && cp ../../target/release/launcher /app/bins/ 
 # For each example, build it and copy the binary and assets to the /app/bins dir
-RUN for example in ${examples} ; do \
+RUN set -e ; for example in ${examples} ; do \
     echo "building $example......" && \
     cargo build --release --no-default-features -F server -p $example && \
     mkdir -p /app/bins/$example && \
@@ -26,6 +26,5 @@ RUN find /app/bins
 # TODO a very simple rust launcher would allow us to avoid a shell altogther.
 FROM gcr.io/distroless/cc-debian12:debug
 COPY --from=builder /app/bins /app
-RUN find /app
 WORKDIR /app
 ENTRYPOINT ["/app/launcher"]

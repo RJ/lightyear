@@ -14,7 +14,7 @@ publish = false
 
 [features]
 default = ["server", "client"]
-gui = ["lightyear_examples_common/gui", "dep:bevy_mod_picking"]
+gui = ["lightyear_examples_common/gui", "dep:bevy_mod_picking", "dep:bevy-inspector-egui"]
 client = ["lightyear_examples_common/client", "gui"]
 server = ["lightyear_examples_common/server"]
 metrics = ["lightyear/metrics", "dep:metrics-exporter-prometheus"]
@@ -30,4 +30,4 @@ bevy.workspace = true
 bevy_mod_picking = { workspace = true, optional = true }
 rand.workspace = true
 metrics-exporter-prometheus = {workspace = true, optional = true}
-bevy-inspector-egui.workspace = true
+bevy-inspector-egui = { workspace = true, optional = true }
