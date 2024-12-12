@@ -29,13 +29,6 @@ jobs:
         with:
           ref: 'examples'
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
@@ -53,6 +46,13 @@ jobs:
           ./build_wasm.sh
 
 # We can publish as an nginx container if desired:
+#     - name: Login to GitHub Container Registry
+#       uses: docker/login-action@v3
+#       with:
+#         registry: ghcr.io
+#         username: ${{ github.actor }}
+#         password: ${{ secrets.GITHUB_TOKEN }}
+#
 #     - name: Prepare Dockerfile
 #       run: |
 #         echo '
