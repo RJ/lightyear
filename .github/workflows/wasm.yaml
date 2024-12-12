@@ -1,9 +1,12 @@
 name: Build WASM frontend
 
 on:
+  pull_request:
+
   push:
     tags:
       - 'v*'
+      
   workflow_dispatch:
     inputs:
       version:
