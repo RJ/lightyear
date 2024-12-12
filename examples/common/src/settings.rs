@@ -185,7 +185,7 @@ pub struct Settings {
     pub shared: SharedSettings,
 }
 
-#[allow(dead_code)]
+#[cfg(feature = "server")]
 pub(crate) fn build_server_netcode_config(
     conditioner: Option<&Conditioner>,
     shared: &SharedSettings,
