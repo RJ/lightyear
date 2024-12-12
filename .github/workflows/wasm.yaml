@@ -6,7 +6,7 @@ on:
   push:
     tags:
       - 'v*'
-      
+
   workflow_dispatch:
     inputs:
       version:
@@ -23,6 +23,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: 'examples'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -51,17 +58,19 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_NAME}}
+          images: ${{ github.repository }}-wasm
           tags: |
             type=semver,pattern={{version}}
             type=sha,format=long
             latest
 
-      - name: Build and publish a Docker image for ${{ github.repository }}
-        uses: macbre/push-to-ghcr@master
+      - name:  Build and publish a Docker image for ${{ github.repository }}
+        uses: docker/build-push-action@v6
         with:
-          image_name: ${{ github.repository }}-wasm
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          dockerfile: ./Dockerfile.generated
+          push: true
           context: .
-          image_tag: ${{ steps.meta.outputs.tags }}
+          file: ./Dockerfile.generated
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

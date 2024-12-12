@@ -23,6 +23,7 @@ fn spawn_text(mut commands: Commands) {
 }
 
 /// Spawns a text element that displays "Server"
+#[cfg(feature = "server")]
 fn spawn_server_text(mut commands: Commands) {
     commands.spawn(
         TextBundle::from_section(
