@@ -17,7 +17,9 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: 'examples'
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
