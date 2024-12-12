@@ -149,7 +149,7 @@ web-sys = { version = "0.3", features = [
   "MessageEvent",
   "BinaryType",
 ] }
-# TODO 0.3.4 changes the field name in bevy_web_keepalive, pin to 0.3.3 for now
+# TODO 0.3.4 changes the field name in WebKeepalivePlugin, pin to 0.3.3 for now
 bevy_web_keepalive = "0.3.3"
 futures-lite = "2.1.0"
 getrandom = { version = "0.2.11", features = [
