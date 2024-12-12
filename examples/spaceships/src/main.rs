@@ -29,6 +29,7 @@ mod shared;
 fn main() {
     let cli = Cli::default();
     let settings_str = include_str!("../assets/settings.ron");
+    #[allow(unused_mut)]
     let mut settings = read_settings::<MySettings>(settings_str);
     #[cfg(target_family = "wasm")]
     lightyear_examples_common::settings::modify_digest_on_wasm(&mut settings.common.client);
