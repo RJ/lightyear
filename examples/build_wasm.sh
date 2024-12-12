@@ -13,6 +13,7 @@ EXAMPLES_LIST="simple_box spaceships"
 
 for example in $EXAMPLE_LIST ;
 do
+	(
 	outdir="$HTDOCS_DIR/$example"
 	mkdir -p "$outdir"
 	echo "Building $example into '$outdir'"
@@ -20,10 +21,14 @@ do
 	cargo build --release --no-default-features -F client
 	wasm-bindgen --no-typescript --target web --out-dir "$outdir" --out-name "$example" "$CARGO_RELEASE_DIR/$example.wasm"
 	sed -e "s/{{name}}/$example/g" "$EXAMPLES_DIR/common/www/index.html" > "$outdir/index.html"
+	)
 done
 
-# TODO write a proper template for this:
+echo "htdocs dir: $HTDOCS_DIR"
+pwd
+ls
 
+# TODO write a proper template for this:
 echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > $HTDOCS_DIR/index.html
 
 for example in $EXAMPLE_LIST ; do
