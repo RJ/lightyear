@@ -204,6 +204,9 @@ pub(crate) fn build_server_netcode_config(
         shared.private_key
     };
 
+    println!("🔑 Using lightyear private key: {privkey:?}");
+    println!("🔑 Using lightyear protocol id:: {}", shared.protocol_id);
+
     let netcode_config = server::NetcodeConfig::default()
         .with_protocol_id(shared.protocol_id)
         .with_key(privkey);
@@ -329,6 +332,8 @@ pub(crate) fn get_server_net_configs(settings: &Settings) -> Vec<server::NetConf
                     transport_config,
                 )
             }
+            // TODO allow enum but filter if support not compiled in with a warning?
+            // "Websocket transport configured but 'websocket' feature disabled"
             #[cfg(feature = "websocket")]
             ServerTransports::WebSocket { local_port } => build_server_netcode_config(
                 settings.server.conditioner.as_ref(),
@@ -370,12 +375,16 @@ pub(crate) fn build_client_netcode_config(
     transport_config: client::ClientTransport,
 ) -> client::NetConfig {
     let conditioner = conditioner.map(|c| c.build());
+    // TODO no point having the private key in shared settings. client's shouldn't know it.
+    // use dummy zeroed key explicitly here.
     let auth = Authentication::Manual {
         server_addr,
         client_id,
         private_key: shared.private_key,
         protocol_id: shared.protocol_id,
     };
+    println!("Auth: {auth:?}");
+    println!("TransportConfig: {transport_config:?}");
     let netcode_config = client::NetcodeConfig::default();
     let io_config = client::IoConfig {
         transport: transport_config,

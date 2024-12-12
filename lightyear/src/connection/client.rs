@@ -228,7 +228,7 @@ impl NetClient for ClientConnection {
     }
 }
 
-#[derive(Resource, Default, Clone)]
+#[derive(Resource, Default, Debug, Clone)]
 #[allow(clippy::large_enum_variant)]
 /// Struct used to authenticate with the server when using the Netcode connection.
 ///
