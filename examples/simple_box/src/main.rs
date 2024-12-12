@@ -32,6 +32,7 @@ mod shared;
 fn main() {
     let cli = Cli::default();
     let settings_str = include_str!("../assets/settings.ron");
+    #[allow(unused_mut)]
     let mut settings = read_settings::<Settings>(settings_str);
     #[cfg(target_family = "wasm")]
     lightyear_examples_common::settings::modify_digest_on_wasm(&mut settings.client);
@@ -40,6 +41,7 @@ fn main() {
     let mut apps = Apps::new(settings, cli);
     // add the `ClientPlugins` and `ServerPlugins` plugin groups
     apps.add_lightyear_plugins();
+    apps.add_user_shared_plugin(ProtocolPlugin);
     #[cfg(feature = "client")]
     apps.add_user_client_plugin(ExampleClientPlugin);
     #[cfg(feature = "server")]
