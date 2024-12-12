@@ -149,8 +149,11 @@ web-sys = { version = "0.3", features = [
   "MessageEvent",
   "BinaryType",
 ] }
-# TODO 0.3.4 changes the field name in WebKeepalivePlugin, pin to 0.3.3 for now
-bevy_web_keepalive = "0.3.3"
+
+# latest version that still uses bevy 0.14:
+#bevy_web_keepalive = "0.3.2"
+bevy_web_keepalive = {git = "https://github.com/Nul-led/bevy_web_keepalive.git", tag = "v0.3.2"}
+
 futures-lite = "2.1.0"
 getrandom = { version = "0.2.11", features = [
   "js", # feature 'js' is required for wasm

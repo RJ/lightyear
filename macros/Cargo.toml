@@ -20,8 +20,8 @@ proc-macro = true
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = { version = "2.0", features = ["full"] }
-serde = { version = "1.0.188", features = ["derive"] }
+serde.workspace = true
 
 [dev-dependencies]
-lightyear = { path = "../lightyear" }
-bevy = { version = "0.14", default-features = false }
+lightyear.workspace = true
+bevy.workspace = true
