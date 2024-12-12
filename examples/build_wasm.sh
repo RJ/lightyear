@@ -11,7 +11,7 @@ export TARGET_CC=/usr/bin/clang
 
 EXAMPLES_LIST="simple_box spaceships"
 
-for example in $EXAMPLE_LIST ;
+for example in $EXAMPLES_LIST ;
 do
 	(
 	outdir="$HTDOCS_DIR/$example"
@@ -31,7 +31,7 @@ ls
 # TODO write a proper template for this:
 echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > $HTDOCS_DIR/index.html
 
-for example in $EXAMPLE_LIST ; do
+for example in $EXAMPLES_LIST ; do
 	echo "<ul><a href=\"$example/\">$example</a></ul>" >> $HTDOCS_DIR/index.html
 done
 
