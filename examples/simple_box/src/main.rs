@@ -19,6 +19,7 @@ use crate::server::ExampleServerPlugin;
 use bevy::prelude::*;
 use lightyear_examples_common::app::{Apps, Cli};
 use lightyear_examples_common::settings::{read_settings, Settings};
+use protocol::ProtocolPlugin;
 
 #[cfg(feature = "client")]
 mod client;
