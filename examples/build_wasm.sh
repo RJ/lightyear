@@ -9,7 +9,9 @@ CARGO_RELEASE_DIR="$BASE_DIR/target/wasm32-unknown-unknown/release"
 export CARGO_BUILD_TARGET=wasm32-unknown-unknown
 export TARGET_CC=/usr/bin/clang
 
-for example in simple_box spaceships ;
+EXAMPLES_LIST="simple_box spaceships"
+
+for example in $EXAMPLE_LIST ;
 do
 	outdir="$HTDOCS_DIR/$example"
 	mkdir -p "$outdir"
@@ -19,3 +21,15 @@ do
 	wasm-bindgen --no-typescript --target web --out-dir "$outdir" --out-name "$example" "$CARGO_RELEASE_DIR/$example.wasm"
 	sed -e "s/{{name}}/$example/g" "$EXAMPLES_DIR/common/www/index.html" > "$outdir/index.html"
 done
+
+# TODO write a proper template for this:
+
+echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > $HTDOCS_DIR/index.html
+
+for example in $EXAMPLE_LIST ; do
+	echo "<ul><a href=\"$example/\">$example</a></ul>" >> $HTDOCS_DIR/index.html
+done
+
+echo "</body></html>" >> $HTDOCS_DIR/index.html
+
+echo "$outdir is ready to ship"

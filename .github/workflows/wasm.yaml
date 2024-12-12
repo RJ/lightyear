@@ -1,0 +1,62 @@
+name: Build WASM frontend
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number in the format `v1.2.3`'
+        required: true
+        type: string
+
+jobs:
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install wasm-bindgen-cli
+        run: |
+          cargo install wasm-bindgen-cli
+
+      - name: Cargo build (for wasm)
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cd examples
+          ./build_wasm.sh
+          
+      - name: Prepare Dockerfile
+        run: |
+          echo '
+          FROM nginx:mainline-alpine
+          COPY ./htdocs/* /usr/share/nginx/html/
+          ' > Dockerfile.generated
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME}}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,format=long
+            latest
+
+      - name: Build and publish a Docker image for ${{ github.repository }}
+        uses: macbre/push-to-ghcr@master
+        with:
+          image_name: ${{ github.repository }}-wasm
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: ./Dockerfile.generated
+          context: .
+          image_tag: ${{ steps.meta.outputs.tags }}
