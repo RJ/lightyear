@@ -17,6 +17,11 @@ on:
 jobs:
   build-wasm:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write   # ghcr (only if pushing a docker image)
+      contents: write   # To push a branch
+      pages: write      # To push to a GitHub Pages site
+      id-token: write   # To update the deployment status
 
     steps:
       - name: Checkout Code
@@ -46,29 +51,41 @@ jobs:
           rustup target add wasm32-unknown-unknown
           cd examples
           ./build_wasm.sh
-          
-      - name: Prepare Dockerfile
-        run: |
-          echo '
-          FROM nginx:mainline-alpine
-          COPY ./htdocs/* /usr/share/nginx/html/
-          ' > Dockerfile.generated
 
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
+# We can publish as an nginx container if desired:
+#     - name: Prepare Dockerfile
+#       run: |
+#         echo '
+#         FROM nginx:mainline-alpine
+#         COPY ./htdocs/* /usr/share/nginx/html/
+#         ' > Dockerfile.generated
+#
+#     - name: Docker meta
+#       id: meta
+#       uses: docker/metadata-action@v5
+#       with:
+#         images: ${{ github.repository }}-wasm
+#         tags: |
+#           type=semver,pattern={{version}}
+#           type=sha,format=long
+#           latest
+#
+#     - name:  Build and publish a Docker image for ${{ github.repository }}
+#       uses: docker/build-push-action@v6
+#       with:
+#         push: true
+#         context: .
+#         file: ./Dockerfile.generated
+#         tags: ${{ steps.meta.outputs.tags }}
+#         labels: ${{ steps.meta.outputs.labels }}
+      - name: Rename htdocs for pages
+        run: mv htdocs wasm-examples
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload wasm frontend artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          images: ${{ github.repository }}-wasm
-          tags: |
-            type=semver,pattern={{version}}
-            type=sha,format=long
-            latest
-
-      - name:  Build and publish a Docker image for ${{ github.repository }}
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          context: .
-          file: ./Dockerfile.generated
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          path: wasm-examples
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
