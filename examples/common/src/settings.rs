@@ -15,6 +15,7 @@ use async_compat::Compat;
 #[cfg(not(target_family = "wasm"))]
 use bevy::tasks::IoTaskPool;
 
+use lightyear::connection::netcode::PRIVATE_KEY_BYTES;
 use lightyear::prelude::client::Authentication;
 #[cfg(feature = "steam")]
 use lightyear::prelude::client::{SocketConfig, SteamConfig};
@@ -195,9 +196,17 @@ pub(crate) fn build_server_netcode_config(
         incoming_jitter: Duration::from_millis(c.jitter_ms as u64),
         incoming_loss: c.packet_loss,
     });
+    // Use private key from environment variable, if set. Otherwise from settings file.
+    let privkey = if let Some(key) = parse_private_key_from_env() {
+        info!("Using private key from LIGHTYEAR_PRIVATE_KEY env var");
+        key
+    } else {
+        shared.private_key
+    };
+
     let netcode_config = server::NetcodeConfig::default()
         .with_protocol_id(shared.protocol_id)
-        .with_key(shared.private_key);
+        .with_key(privkey);
     let io_config = server::IoConfig {
         transport: transport_config,
         conditioner,
@@ -236,9 +245,25 @@ impl From<&WebTransportCertificateSettings> for server::Identity {
     fn from(wt: &WebTransportCertificateSettings) -> server::Identity {
         match wt {
             WebTransportCertificateSettings::AutoSelfSigned(sans) => {
+                // In addition to and Subject Alternate Names (SAN) added via the config,
+                // we add the public ip and domain for edgegap, if detected, and also
+                // any extra values specified via the SELF_SIGNED_SANS environment variable.
+                let mut sans = sans.clone();
+                // Are we running on edgegap?
+                if let Ok(public_ip) = std::env::var("ARBITRIUM_PUBLIC_IP") {
+                    println!("🔐 SAN += ARBITRIUM_PUBLIC_IP: {}", public_ip);
+                    sans.push(public_ip);
+                    sans.push("*.pr.edgegap.net".to_string());
+                }
+                // generic env to add domains and ips to SAN list:
+                // SELF_SIGNED_SANS="example.org,example.com,127.1.1.1"
+                if let Ok(san) = std::env::var("SELF_SIGNED_SANS") {
+                    println!("🔐 SAN += SELF_SIGNED_SANS: {}", san);
+                    sans.extend(san.split(',').map(|s| s.to_string()));
+                }
+                println!("🔐 Generating self-signed certificate with SANs: {sans:?}");
                 let identity = server::Identity::self_signed(sans).unwrap();
                 let digest = identity.certificate_chain().as_slice()[0].hash();
-                println!("Generating self-signed certificate with SANs: {:?}", sans);
                 println!("🔐 Certificate digest: {digest}");
                 identity
             }
@@ -408,4 +433,33 @@ pub fn get_client_net_config(settings: &Settings, client_id: u64) -> client::Net
             conditioner: settings.server.conditioner.as_ref().map(|c| c.build()),
         },
     }
+}
+
+/// Reads and parses the LIGHTYEAR_PRIVATE_KEY environment variable into a private key.
+#[cfg(feature = "server")]
+pub fn parse_private_key_from_env() -> Option<[u8; PRIVATE_KEY_BYTES]> {
+    let Ok(key_str) = std::env::var("LIGHTYEAR_PRIVATE_KEY") else {
+        return None;
+    };
+    let private_key: Vec<u8> = key_str
+        .chars()
+        .filter(|c| c.is_ascii_digit() || *c == ',')
+        .collect::<String>()
+        .split(',')
+        .map(|s| {
+            s.parse::<u8>()
+                .expect("Failed to parse number in private key")
+        })
+        .collect();
+
+    if private_key.len() != PRIVATE_KEY_BYTES {
+        panic!(
+            "Private key must contain exactly {} numbers",
+            PRIVATE_KEY_BYTES
+        );
+    }
+
+    let mut bytes = [0u8; PRIVATE_KEY_BYTES];
+    bytes.copy_from_slice(&private_key);
+    Some(bytes)
 }

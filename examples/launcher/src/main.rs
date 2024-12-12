@@ -1,3 +1,8 @@
+// Launcher used as docker entrypoint for servers.
+// Edgegap allows you to modify the entrypoint only via API, not dashboard..
+// but you can easily change ENV vars via the dashboard. So we read an ENV to decide
+// which server binary to launch, which saves us a lot of configuration hassle.
+// (all server binaries live in the same docker image)
 use std::{
     env, fs,
     process::{exit, Command},
@@ -24,8 +29,8 @@ fn main() {
     let dir_path = base_dir.join(&example_name);
     let binary_path = dir_path.join(&example_name);
 
-    println!("dir_path: {}", dir_path.display());
-    println!("binary_path: {}", binary_path.display());
+    // println!("dir_path: {}", dir_path.display());
+    // println!("binary_path: {}", binary_path.display());
 
     // Change to the directory
     if let Err(err) = env::set_current_dir(&dir_path) {

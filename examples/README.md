@@ -75,8 +75,10 @@ commands:
 
 ```bash
 # building the game server container
-docker build -t examples -f examples/Dockerfile.server --progress=plain --build-arg examples=simple_box .
+docker build -t examples -f examples/Dockerfile.server --progress=plain --build-arg examples="simple_box spaceships" .
 
 # and to run, specify the example name as an env:
 docker run --rm -it -e EXAMPLE_NAME=simple_box examples
+# or with a key and an extra SANs for self-signed cert:
+ docker run --rm -it -e EXAMPLE_NAME=simple_box -e LIGHTYEAR_PRIVATE_KEY="1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1" -e SELF_SIGNED_SANS="example.com,10.1.2.3" examples
 ```
