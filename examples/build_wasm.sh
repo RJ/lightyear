@@ -1,4 +1,5 @@
 #!/bin/bash -ex
+# Run shellcheck on this after modifications.
 # Assuming this script is kept in the examples dir
 cd "$(dirname "$0")"
 BASE_DIR=$(builtin cd .. ; pwd)
@@ -29,12 +30,12 @@ pwd
 ls
 
 # TODO write a proper template for this:
-echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > $HTDOCS_DIR/index.html
+echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > "$HTDOCS_DIR/index.html"
 
 for example in $EXAMPLES_LIST ; do
-	echo "<ul><a href=\"$example/\">$example</a></ul>" >> $HTDOCS_DIR/index.html
+	echo "<ul><a href=\"$example/\">$example</a></ul>" >> "$HTDOCS_DIR/index.html"
 done
 
-echo "</body></html>" >> $HTDOCS_DIR/index.html
+echo "</body></html>" >> "$HTDOCS_DIR/index.html"
 
-echo "$outdir is ready to ship"
+echo "$HTDOCS_DIR is ready to ship"
