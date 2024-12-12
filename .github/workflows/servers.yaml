@@ -17,6 +17,8 @@ on:
 jobs:
   build-servers:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
 
     steps:
       - name: Checkout Code
@@ -49,5 +51,7 @@ jobs:
           file: ./examples/Dockerfile.server
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Don't "quote" this space-separated list of example names
+          # There are multiple layers of escaping at work here..
           build-args: |
             examples=spaceships simple_box
