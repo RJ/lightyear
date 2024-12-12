@@ -435,24 +435,6 @@ fn log_plugin() -> LogPlugin {
 }
 
 fn new_gui_app() -> App {
-    info!("new_gui_app");
-    let mut app = App::new();
-    app.add_plugins(
-        DefaultPlugins
-            .build()
-            .set(AssetPlugin {
-                // https://github.com/bevyengine/bevy/issues/10157
-                meta_check: bevy::asset::AssetMetaCheck::Never,
-                ..default()
-            })
-            .set(log_plugin())
-            .set(window_plugin()),
-    );
-    app
-}
-
-fn new_gui_app_server() -> App {
-    info!("new_gui_app_server");
     let mut app = App::new();
     app.add_plugins(
         DefaultPlugins
@@ -469,7 +451,6 @@ fn new_gui_app_server() -> App {
 }
 
 fn new_headless_app() -> App {
-    info!("new_headless_app");
     let mut app = App::new();
     app.add_plugins((MinimalPlugins, log_plugin(), StatesPlugin, HierarchyPlugin));
     app

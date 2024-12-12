@@ -29,7 +29,7 @@ fn spawn_server_text(mut commands: Commands) {
             "Server",
             TextStyle {
                 font_size: 30.0,
-                color: Color::WHITE,
+                color: Color::WHITE.with_alpha(0.5),
                 ..default()
             },
         )

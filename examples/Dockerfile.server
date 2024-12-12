@@ -22,8 +22,7 @@ RUN set -e ; for example in ${examples} ; do \
 RUN find /app/bins
 
 # Final stage: Create minimal image, copy over new bins dir
-# use the :debug version so we have busybox - we want the shell for the launcher.
-# TODO a very simple rust launcher would allow us to avoid a shell altogther.
+# (we can use distroless/cc-debian12:debug if we need a busybox shell in the container)
 FROM gcr.io/distroless/cc-debian12:debug
 COPY --from=builder /app/bins /app
 WORKDIR /app

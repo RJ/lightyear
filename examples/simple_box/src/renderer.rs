@@ -11,11 +11,9 @@ impl Plugin for ExampleRendererPlugin {
     fn build(&self, app: &mut App) {
         // the protocol needs to be shared between the client and server
         app.add_plugins(ProtocolPlugin);
-        if app.is_plugin_added::<RenderPlugin>() {
-            app.add_plugins(DefaultPickingPlugins);
-            app.add_systems(Startup, init);
-            app.add_systems(Update, draw_boxes);
-        }
+        app.add_plugins(DefaultPickingPlugins);
+        app.add_systems(Startup, init);
+        app.add_systems(Update, draw_boxes);
     }
 }
 

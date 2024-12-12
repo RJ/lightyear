@@ -178,7 +178,7 @@ pub struct SharedSettings {
     pub(crate) compression: CompressionConfig,
 }
 
-#[derive(Resource, Debug, Clone, Serialize, Deserialize)]
+#[derive(Resource, Debug, Clone, Deserialize, Serialize)]
 pub struct Settings {
     pub server: ServerSettings,
     pub client: ClientSettings,
@@ -220,12 +220,15 @@ pub(crate) fn build_server_netcode_config(
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub enum WebTransportCertificateSettings {
-    /// Generate a self-signed certificate, with given SANs list.
+    /// Generate a self-signed certificate, with given SANs list to add to the certifictate
+    /// eg: ["example.com", "*.gameserver.example.org", "10.1.2.3", "::1"]
     AutoSelfSigned(Vec<String>),
     /// Load certificate pem files from disk
     FromFile {
-        cert_pem_path: String,
-        private_key_pem_path: String,
+        /// Path to cert .pem file
+        cert: String,
+        /// Path to private key .pem file
+        key: String,
     },
 }
 
@@ -268,8 +271,8 @@ impl From<&WebTransportCertificateSettings> for server::Identity {
                 identity
             }
             WebTransportCertificateSettings::FromFile {
-                cert_pem_path,
-                private_key_pem_path,
+                cert: cert_pem_path,
+                key: private_key_pem_path,
             } => {
                 // this is async because we need to load the certificate from io
                 // we need async_compat because wtransport expects a tokio reactor
