@@ -24,7 +24,6 @@ impl Plugin for ExampleServerPlugin {
         app.init_resource::<ClientEntityMap>();
         app.add_systems(Startup, start_server);
         // the physics/FixedUpdates systems that consume inputs should be run in this set.
-        #[cfg(feature = "gui")]
         app.add_systems(FixedUpdate, movement);
         app.add_systems(Update, (send_message, handle_connections));
     }
@@ -97,7 +96,6 @@ pub(crate) fn handle_disconnections(
 }
 
 /// Read client inputs and move players in server therefore giving a basis for other clients
-#[cfg(feature = "gui")]
 fn movement(
     mut position_query: Query<&mut PlayerPosition>,
     entity_map: Res<ClientEntityMap>,
