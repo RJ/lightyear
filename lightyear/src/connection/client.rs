@@ -228,7 +228,7 @@ impl NetClient for ClientConnection {
     }
 }
 
-#[derive(Resource, Default, Debug, Clone)]
+#[derive(Resource, Default, Clone)]
 #[allow(clippy::large_enum_variant)]
 /// Struct used to authenticate with the server when using the Netcode connection.
 ///
@@ -306,6 +306,27 @@ impl Authentication {
                 .generate()
                 .ok()
             }
+        }
+    }
+}
+
+impl std::fmt::Debug for Authentication {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Authentication::Token(_) => write!(f, "Token(<connect_token>)"),
+            Authentication::Manual {
+                server_addr,
+                client_id,
+                private_key,
+                protocol_id,
+            } => f
+                .debug_struct("Manual")
+                .field("server_addr", server_addr)
+                .field("client_id", client_id)
+                .field("private_key", private_key)
+                .field("protocol_id", protocol_id)
+                .finish(),
+            Authentication::None => write!(f, "None"),
         }
     }
 }
