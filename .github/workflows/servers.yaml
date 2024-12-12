@@ -1,0 +1,53 @@
+name: Build servers for examples
+
+on:
+  pull_request:
+
+  push:
+    tags:
+      - 'v*'
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number in the format `v1.2.3`'
+        required: true
+        type: string
+
+jobs:
+  build-servers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: 'examples'
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ github.repository }}-server
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,format=long
+            latest
+
+      - name: Build and publish docker for example server binaries
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          context: .
+          file: ./examples/Dockerfile.server
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            examples="spaceships simple_box"
