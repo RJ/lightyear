@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::render::RenderPlugin;
-use bevy_mod_picking::DefaultPickingPlugins;
 
 use crate::protocol::*;
 
@@ -9,7 +8,6 @@ pub struct ExampleRendererPlugin;
 
 impl Plugin for ExampleRendererPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(DefaultPickingPlugins);
         app.add_systems(Startup, init);
         app.add_systems(Update, draw_boxes);
     }

@@ -14,10 +14,12 @@ publish = false
 
 [features]
 default = ["server", "client"]
-gui = ["lightyear_examples_common/gui", "dep:bevy_mod_picking", "dep:bevy-inspector-egui"]
+gui = ["lightyear_examples_common/gui", "dep:bevy-inspector-egui"]
 client = ["lightyear_examples_common/client", "gui"]
 server = ["lightyear_examples_common/server"]
 metrics = ["lightyear/metrics", "dep:metrics-exporter-prometheus"]
+bevygap_client = ["lightyear_examples_common/bevygap_client", "client"]
+bevygap_server = ["lightyear_examples_common/bevygap_server", "server"]
 
 [dependencies]
 lightyear_examples_common.workspace = true
@@ -27,7 +29,9 @@ anyhow.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 bevy.workspace = true
-bevy_mod_picking = { workspace = true, optional = true }
 rand.workspace = true
 metrics-exporter-prometheus = {workspace = true, optional = true}
 bevy-inspector-egui = { workspace = true, optional = true }
+
+[lints]
+workspace = true

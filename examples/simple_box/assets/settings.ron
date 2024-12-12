@@ -3,14 +3,14 @@ Settings(
         inspector: true,
         client_id: 0,
         client_port: 0, // the OS will assign a random open port
-        server_addr: "172.233.248.37",
+        server_addr: "127.0.0.1",
         conditioner: None,
         //Some(Conditioner(
         //    latency_ms: 200,
         //    jitter_ms: 20,
         //    packet_loss: 0.05
         //)),
-        server_port: 30631,
+        server_port: 5000,
         transport: WebTransport(
             // this is only needed for wasm, the self-signed certificates are only valid for 2 weeks
             // the server will print the certificate digest on startup

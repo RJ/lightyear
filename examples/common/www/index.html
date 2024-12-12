@@ -29,6 +29,7 @@
 
 <body>
     <script type="module">
+        window.MATCHMAKER_URL = "wss://game.metabrew.com/matchmaker/ws";
         import init from './{{name}}.js'
 
         init().catch((error) => {

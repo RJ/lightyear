@@ -18,8 +18,13 @@ steam = ["lightyear/steam"]
 websocket = ["lightyear/websocket"]
 server = []
 client = ["gui"]
+bevygap_client = ["client", "dep:bevygap_client_plugin"]
+bevygap_server = ["server", "dep:bevygap_server_plugin"]
+
 #inspector = ["gui", "dep:bevy-inspector-egui"]
 gui = [
+    "dep:bevy_mod_picking",
+    
     "bevy/bevy_asset",
     "bevy/bevy_render",
     "bevy/bevy_pbr",
@@ -49,6 +54,9 @@ crossbeam-channel.workspace = true
 rand.workspace = true
 serde.workspace = true
 bevy.workspace = true
+bevygap_client_plugin = {workspace = true, optional = true}
+bevygap_server_plugin = {workspace = true, optional = true}
+bevy_mod_picking = { workspace = true, optional = true }
 #bevy-inspector-egui = {workspace = true, optional = true}
 
 [target."cfg(target_family = \"wasm\")".dependencies]

@@ -4,8 +4,7 @@
 use std::net::{Ipv4Addr, SocketAddr};
 
 use bevy::asset::ron;
-use bevy::prelude::info;
-use bevy::prelude::{default, Resource};
+use bevy::prelude::*;
 use bevy::utils::Duration;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -164,6 +163,17 @@ pub struct ClientSettings {
 
     /// Possibly add a conditioner to simulate network conditions
     pub(crate) conditioner: Option<Conditioner>,
+}
+
+impl ClientSettings {
+    pub fn certificate_digest(&self) -> Option<String> {
+        match &self.transport {
+            ClientTransports::WebTransport { certificate_digest } => {
+                Some(certificate_digest.clone())
+            }
+            _ => None,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize)]
@@ -474,4 +484,60 @@ pub fn parse_private_key_from_env() -> Option<[u8; PRIVATE_KEY_BYTES]> {
     let mut bytes = [0u8; PRIVATE_KEY_BYTES];
     bytes.copy_from_slice(&private_key);
     Some(bytes)
+}
+
+/// This is the path to the websocket endpoint on `bevygap_matchmaker_httpd``
+///
+/// * Checks for window.MATCHMAKER_URL global variable (set in index.html)
+///
+/// otherwise, defaults to transforming the window.location:
+///
+/// * Changes http://www.example.com/whatever  -> ws://www.example.com/matchmaker/ws
+/// * Changes https://www.example.com/whatever -> wss://www.example.com/matchmaker/ws
+#[cfg(target_family = "wasm")]
+pub fn get_matchmaker_url() -> String {
+    const MATCHMAKER_PATH: &str = "/matchmaker/ws";
+    let window = web_sys::window().expect("expected window");
+    if let Some(obj) = window.get("MATCHMAKER_URL") {
+        info!("Using matchmaker url from window.MATCHMAKER_URL");
+        obj.as_string().expect("MATCHMAKER_URL should be a string")
+    } else {
+        info!("Creating matchmaker url from window.location");
+        let location = window.location();
+        let host = location.host().expect("Expected host");
+        let proto = if location.protocol().expect("Expected protocol") == "https:" {
+            "wss:"
+        } else {
+            "ws:"
+        };
+        format!("{proto}//{host}{MATCHMAKER_PATH}")
+    }
+}
+
+/// This is the path to the websocket endpoint on `bevygap_matchmaker_httpd``
+///
+/// * Reads COMPILE_TIME_MATCHMAKER_URL environment variable during compilation
+///   otherwise:
+/// * Reads the MATCHMAKER_URL environment variable at runtime
+///   otherwise:
+/// * Defaults to a localhost dev url.
+#[cfg(not(target_family = "wasm"))]
+pub fn get_matchmaker_url() -> String {
+    const MATCHMAKER_PATH: &str = "/matchmaker/ws";
+    // use compile-time env variable, this overwrites everything if set.
+    match option_env!("COMPILE_TIME_MATCHMAKER_URL") {
+        Some(url) => {
+            info!("Using matchmaker url from COMPILE_TIME_MATCHMAKER_URL env");
+            url.to_string()
+        }
+        None => {
+            if let Ok(url) = std::env::var("MATCHMAKER_URL") {
+                info!("Using matchmaker url from MATCHMAKER_URL env");
+                url
+            } else {
+                warn!("Using default localhost dev url for matchmaker");
+                format!("ws://127.0.0.1:3000{MATCHMAKER_PATH}")
+            }
+        }
+    }
 }

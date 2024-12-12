@@ -113,8 +113,32 @@ pub enum Apps {
 }
 
 impl Apps {
-    /// Build the apps with the given settings and CLI options.
     pub fn new(settings: Settings, cli: Cli) -> Self {
+        #[allow(unused_mut)]
+        let mut apps = Apps::build(settings.clone(), cli);
+        // inject bevygap plugins
+        #[cfg(feature = "bevygap_client")]
+        {
+            println!("adding bevygap client plugin");
+            apps.add_user_client_plugin(bevygap_client_plugin::prelude::BevygapClientPlugin);
+        }
+        #[cfg(feature = "bevygap_server")]
+        {
+            // server plugin needs to register the cert digest so it can be provided to clients
+            let cert_digest = settings.client.certificate_digest().unwrap_or_else(|| {
+                panic!("no cert digest found, cannot add bevygap server plugin");
+            });
+            println!("adding bevygap server plugin, digest: {cert_digest:?}");
+            apps.add_user_server_plugin(
+                bevygap_server_plugin::prelude::BevygapServerPlugin::self_signed_digest(
+                    cert_digest,
+                ),
+            );
+        }
+        apps
+    }
+    /// Build the apps with the given settings and CLI options.
+    fn build(settings: Settings, cli: Cli) -> Self {
         match cli {
             #[cfg(all(feature = "client", feature = "server"))]
             Cli::HostServer { client_id } => {
@@ -413,7 +437,7 @@ impl Apps {
 fn window_plugin() -> WindowPlugin {
     WindowPlugin {
         primary_window: Some(Window {
-            title: "Lightyear Examples".to_owned(),
+            title: format!("Lightyear Example: {}", env!("CARGO_PKG_NAME")),
             resolution: (1024., 768.).into(),
             present_mode: bevy::window::PresentMode::AutoVsync,
             // Tells wasm to resize the window according to the available canvas
