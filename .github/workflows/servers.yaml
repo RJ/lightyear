@@ -45,7 +45,7 @@ jobs:
 
       # Dockerfile is expecting env loaded from this file:
       - name: Load example_list.env file
-        run: cat ./examples/example_list.env >> $GITHUB_ENV
+        run: grep -v '^#' ./examples/example_list.env >> $GITHUB_ENV
 
       - name: Build and publish docker for example server binaries
         uses: docker/build-push-action@v6
