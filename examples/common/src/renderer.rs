@@ -69,19 +69,20 @@ fn set_window_title(mut window: Query<&mut Window>, game_name: Res<GameName>) {
 }
 
 fn spawn_text(game_name: Res<GameName>, mut commands: Commands) {
-     commands
+    commands
         .spawn((
-           Pickable::IGNORE,
-           NodeBundle {
-            style: Style {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::Center,
+            Pickable::IGNORE,
+            NodeBundle {
+                style: Style {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        }))
+        ))
         .with_children(|parent| {
             parent
                 .spawn(TextBundle::from_section(
@@ -282,7 +283,11 @@ pub(crate) fn handle_disconnection(
     for event in events.read() {
         let reason = &event.reason;
         error!("Disconnected from server: {:?}", reason);
-        commands.trigger(UpdateStatusMessage(format!("Disconnected: {:?}", reason)));
+        let msg = match reason {
+            None => "Disconnected cleanly".to_string(),
+            Some(reason) => format!("Disconnected: {:?}", reason),
+        };
+        commands.trigger(UpdateStatusMessage(msg));
     }
 }
 
