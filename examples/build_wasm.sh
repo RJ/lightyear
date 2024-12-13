@@ -15,7 +15,7 @@ set -a
 source ./example_list.env
 set +a
 
-for example in $example_list ;
+for example in $(echo $example_list | tr ',' ' ') ;
 do
 	(
 	outdir="$HTDOCS_DIR/$example"
@@ -35,7 +35,7 @@ ls
 # TODO write a proper template for this:
 echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > "$HTDOCS_DIR/index.html"
 
-for example in $example_list ; do
+for example in $(echo $example_list | tr ',' ' ') ; do
 	echo "<ul><a href=\"$example/\">$example</a></ul>" >> "$HTDOCS_DIR/index.html"
 done
 
