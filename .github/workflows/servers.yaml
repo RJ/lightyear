@@ -44,11 +44,8 @@ jobs:
             latest
 
       # Dockerfile is expecting env loaded from this file:
-      - name: Load .env file
-        uses: aarcangeli/load-dotenv@v1
-        with:
-          filenames: |
-            ./examples/example_list.env
+      - name: Load example_list.env file
+        run: cat ./examples/example_list.env >> $GITHUB_ENV
 
       - name: Build and publish docker for example server binaries
         uses: docker/build-push-action@v6
