@@ -47,6 +47,9 @@ jobs:
       - name: Load example_list.env file
         run: grep -v '^#' ./examples/example_list.env >> $GITHUB_ENV
 
+      - name: debug env
+        run: echo "ENV IS $GITHUB_ENV" && cat $GITHUB_ENV
+
       - name: Build and publish docker for example server binaries
         uses: docker/build-push-action@v6
         with:
