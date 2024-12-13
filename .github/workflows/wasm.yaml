@@ -44,8 +44,23 @@ jobs:
           rustup target add wasm32-unknown-unknown
           cd examples
           ./build_wasm.sh
+      - name: Rename htdocs for pages
+        run: mv htdocs wasm-examples
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload wasm frontend artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: wasm-examples
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
 # We can publish as an nginx container if desired:
+#
+# but for now publishing to github pages is fine.
+# perhaps inline as iframes in the book?
+#
 #     - name: Login to GitHub Container Registry
 #       uses: docker/login-action@v3
 #       with:
@@ -78,14 +93,3 @@ jobs:
 #         file: ./Dockerfile.generated
 #         tags: ${{ steps.meta.outputs.tags }}
 #         labels: ${{ steps.meta.outputs.labels }}
-      - name: Rename htdocs for pages
-        run: mv htdocs wasm-examples
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload wasm frontend artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: wasm-examples
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
