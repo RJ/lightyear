@@ -10,9 +10,12 @@ CARGO_RELEASE_DIR="$BASE_DIR/target/wasm32-unknown-unknown/release"
 export CARGO_BUILD_TARGET=wasm32-unknown-unknown
 export TARGET_CC=/usr/bin/clang
 
-EXAMPLES_LIST="simple_box"
+# load "example_list" variable from .env file, shared with Dockerfile.server
+set -a
+source ./example_list.env
+set +a
 
-for example in $EXAMPLES_LIST ;
+for example in $example_list ;
 do
 	(
 	outdir="$HTDOCS_DIR/$example"
@@ -32,7 +35,7 @@ ls
 # TODO write a proper template for this:
 echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > "$HTDOCS_DIR/index.html"
 
-for example in $EXAMPLES_LIST ; do
+for example in $example_list ; do
 	echo "<ul><a href=\"$example/\">$example</a></ul>" >> "$HTDOCS_DIR/index.html"
 done
 

@@ -43,6 +43,13 @@ jobs:
             type=sha,format=long
             latest
 
+      # Dockerfile is expecting env loaded from this file:
+      - name: Load .env file
+        uses: aarcangeli/load-dotenv@v1
+        with:
+          filenames: |
+            ./example_list.env 
+
       - name: Build and publish docker for example server binaries
         uses: docker/build-push-action@v6
         with:

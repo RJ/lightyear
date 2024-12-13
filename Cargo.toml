@@ -9,7 +9,7 @@ members = [
   "examples/common",
   "examples/launcher",
   "examples/simple_box",
- # "examples/spaceships",
+  "examples/spaceships",
 ]
 default-members = ["lightyear"]
 exclude = ["examples/certificates"]

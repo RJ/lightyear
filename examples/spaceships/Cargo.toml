@@ -15,6 +15,9 @@ metrics = ["lightyear/metrics", "dep:metrics-exporter-prometheus"]
 client = ["lightyear_examples_common/client", "dep:bevy_screen_diagnostics", "gui"]
 gui = ["lightyear_examples_common/gui", "dep:bevy_screen_diagnostics"]
 server = ["lightyear_examples_common/server"]
+tls = ["dep:bevygap_client_plugin"]
+bevygap_client = ["lightyear_examples_common/bevygap_client", "client"]
+bevygap_server = ["lightyear_examples_common/bevygap_server", "server"]
 
 [dependencies]
 lightyear_examples_common.workspace = true
@@ -38,6 +41,7 @@ tracing.workspace = true
 tracing-subscriber.workspace = true
 bevy.workspace = true
 rand.workspace = true
+bevygap_client_plugin = {workspace = true, optional = true, features =  ["matchmaker-tls"]}
 
 [lints]
 workspace = true
