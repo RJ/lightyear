@@ -59,4 +59,4 @@ jobs:
           # There are multiple layers of escaping at work here..
           # this is loaded from example_list.env above
           build-args: |
-            examples=${{ env.example_list }}
+            example_list=${{ env.example_list }}
