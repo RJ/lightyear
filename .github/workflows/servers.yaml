@@ -60,5 +60,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           # Don't "quote" this space-separated list of example names
           # There are multiple layers of escaping at work here..
+          # this is loaded from example_list.env above
           build-args: |
-            examples=spaceships simple_box
+            examples=${{ env.example_list }}

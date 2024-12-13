@@ -1,8 +1,11 @@
 FROM metabrew/rust-chef-sccache:latest AS builder
-# names of examples to build servers for
-# pass our env file to docker like this, to override the default:
-# source ./example_list.env && docker build --env-file ./example_list.env ....
-ENV example_list="simple_box"
+# names of examples to build servers for, passed as build-arg
+ARG example_list=""
+ENV example_list="${example_list}"
+
+# fail early if build-arg wasn't set:
+RUN [ -z "$example_list" ] && echo "Empty example_list !!!" || exit 0
+RUN [ -z "$example_list" ] && exit 1 || exit 0
 
 WORKDIR /app
 COPY . .
