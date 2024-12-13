@@ -1,6 +1,6 @@
 FROM metabrew/rust-chef-sccache:latest AS builder
 # names of examples to build servers for
-ARG examples="simple_box spaceships"
+ARG examples="simple_box"
 
 WORKDIR /app
 COPY . .
@@ -12,7 +12,7 @@ RUN cd examples/launcher && cargo build --release && cp ../../target/release/lau
 # For each example, build it and copy the binary and assets to the /app/bins dir
 RUN set -e ; for example in ${examples} ; do \
     echo "building $example......" && \
-    cargo build --release --no-default-features -F server -p $example && \
+    cargo build --release --no-default-features -F bevygap_server -p $example && \
     mkdir -p /app/bins/$example && \
     cp /app/target/release/$example /app/bins/$example/ && \
     cp -r examples/$example/assets /app/bins/$example/ && \

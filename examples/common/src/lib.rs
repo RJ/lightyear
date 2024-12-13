@@ -87,6 +87,8 @@ compile_error!("client feature requires gui feature");
 compile_error!("One of server, client features must be enabled");
 
 pub mod app;
+#[cfg(any(feature = "bevygap_server", feature = "bevygap_client"))]
+pub mod bevygap_shared;
 #[cfg(feature = "gui")]
 pub mod renderer;
 pub mod settings;

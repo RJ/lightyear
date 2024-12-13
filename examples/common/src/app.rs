@@ -117,6 +117,10 @@ impl Apps {
         #[allow(unused_mut)]
         let mut apps = Apps::build(settings.clone(), cli, name);
         // inject bevygap plugins
+        #[cfg(any(feature = "bevygap_client", feature = "bevygap_server"))]
+        {
+            apps.add_user_shared_plugin(crate::bevygap_shared::BevygapSharedExtensionPlugin);
+        }
         #[cfg(feature = "bevygap_client")]
         {
             println!("adding bevygap client plugin");
