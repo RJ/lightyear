@@ -203,8 +203,8 @@ bevy-inspector-egui = {version = "0.27"}
 bevy_screen_diagnostics = {version = "0.6"}
 
 # bevygap for deploying on Edgegap
-bevygap_server_plugin = {git = "https://github.com/RJ/bevygap.git", tag = "v0.2.2"}
-bevygap_client_plugin = {git = "https://github.com/RJ/bevygap.git", tag = "v0.2.2"}
+bevygap_server_plugin = {git = "https://github.com/RJ/bevygap.git", rev = "041e2be874ec61fe7eb5b959a3eee8852b734ff3"}
+bevygap_client_plugin = {git = "https://github.com/RJ/bevygap.git", rev = "041e2be874ec61fe7eb5b959a3eee8852b734ff3"}
 
 # Make sure bevygap's lightyear dep is our exact version:
 

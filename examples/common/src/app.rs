@@ -113,36 +113,8 @@ pub enum Apps {
 }
 
 impl Apps {
-    pub fn new(settings: Settings, cli: Cli, name: String) -> Self {
-        #[allow(unused_mut)]
-        let mut apps = Apps::build(settings.clone(), cli, name);
-        // inject bevygap plugins
-        #[cfg(any(feature = "bevygap_client", feature = "bevygap_server"))]
-        {
-            println!("🌐 Bevygap features are enabled");
-            apps.add_user_shared_plugin(crate::bevygap_shared::BevygapSharedExtensionPlugin);
-        }
-        #[cfg(feature = "bevygap_client")]
-        {
-            apps.add_user_client_plugin(bevygap_client_plugin::prelude::BevygapClientPlugin);
-        }
-        #[cfg(feature = "bevygap_server")]
-        {
-            // server plugin needs to register the cert digest so it can be provided to clients
-            let cert_digest = settings.client.certificate_digest().unwrap_or_else(|| {
-                panic!("no cert digest found, cannot add bevygap server plugin");
-            });
-            println!("cert digest: {cert_digest:?}");
-            apps.add_user_server_plugin(
-                bevygap_server_plugin::prelude::BevygapServerPlugin::self_signed_digest(
-                    cert_digest,
-                ),
-            );
-        }
-        apps
-    }
     /// Build the apps with the given settings and CLI options.
-    fn build(settings: Settings, cli: Cli, name: String) -> Self {
+    pub fn new(settings: Settings, cli: Cli, name: String) -> Self {
         match cli {
             #[cfg(all(feature = "client", feature = "server"))]
             Cli::HostServer { client_id } => {
@@ -275,7 +247,26 @@ impl Apps {
                 });
             }
         }
+        self.add_bevygap_plugins();
         self
+    }
+
+    /// Adds bevygap plugins, if enabled with feature flags
+    fn add_bevygap_plugins(&mut self) {
+        // inject bevygap plugins
+        #[cfg(any(feature = "bevygap_client", feature = "bevygap_server"))]
+        {
+            println!("🌐 Bevygap features are enabled");
+            self.add_user_shared_plugin(crate::bevygap_shared::BevygapSharedExtensionPlugin);
+        }
+        #[cfg(feature = "bevygap_client")]
+        {
+            self.add_user_client_plugin(bevygap_client_plugin::prelude::BevygapClientPlugin);
+        }
+        #[cfg(feature = "bevygap_server")]
+        {
+            self.add_user_server_plugin(bevygap_server_plugin::prelude::BevygapServerPlugin);
+        }
     }
 
     /// Adds plugin to the client app

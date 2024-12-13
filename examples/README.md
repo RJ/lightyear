@@ -71,6 +71,11 @@ commands:
   out.
 - then start the client wasm test with `trunk serve`
 
+## NOTES
+
+The common crate provides the initial UI setup along with a connect/disconnect button, and manages
+the bevygap stuff if needed.
+
 ## Building for Edgegap
 
 ```bash

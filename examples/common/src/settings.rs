@@ -165,17 +165,6 @@ pub struct ClientSettings {
     pub(crate) conditioner: Option<Conditioner>,
 }
 
-impl ClientSettings {
-    pub fn certificate_digest(&self) -> Option<String> {
-        match &self.transport {
-            ClientTransports::WebTransport { certificate_digest } => {
-                Some(certificate_digest.clone())
-            }
-            _ => None,
-        }
-    }
-}
-
 #[derive(Copy, Clone, Debug, Deserialize, Serialize)]
 pub struct SharedSettings {
     /// An id to identify the protocol version
