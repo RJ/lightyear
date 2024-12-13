@@ -119,11 +119,11 @@ impl Apps {
         // inject bevygap plugins
         #[cfg(any(feature = "bevygap_client", feature = "bevygap_server"))]
         {
+            println!("🌐 Bevygap features are enabled");
             apps.add_user_shared_plugin(crate::bevygap_shared::BevygapSharedExtensionPlugin);
         }
         #[cfg(feature = "bevygap_client")]
         {
-            println!("adding bevygap client plugin");
             apps.add_user_client_plugin(bevygap_client_plugin::prelude::BevygapClientPlugin);
         }
         #[cfg(feature = "bevygap_server")]
@@ -132,7 +132,7 @@ impl Apps {
             let cert_digest = settings.client.certificate_digest().unwrap_or_else(|| {
                 panic!("no cert digest found, cannot add bevygap server plugin");
             });
-            println!("adding bevygap server plugin, digest: {cert_digest:?}");
+            println!("cert digest: {cert_digest:?}");
             apps.add_user_server_plugin(
                 bevygap_server_plugin::prelude::BevygapServerPlugin::self_signed_digest(
                     cert_digest,
