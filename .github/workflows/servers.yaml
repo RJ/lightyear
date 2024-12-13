@@ -48,7 +48,7 @@ jobs:
         uses: aarcangeli/load-dotenv@v1
         with:
           filenames: |
-            ./example_list.env 
+            ./examples/example_list.env
 
       - name: Build and publish docker for example server binaries
         uses: docker/build-push-action@v6
