@@ -1,7 +1,7 @@
 FROM metabrew/rust-chef-sccache:latest AS builder
 # names of examples to build servers for, passed as build-arg
 ARG example_list=""
-ENV example_list="${example_list}"
+ENV example_list=${example_list}
 
 # fail early if build-arg wasn't set:
 RUN [ -z "$example_list" ] && echo "Empty example_list !!!" || exit 0
