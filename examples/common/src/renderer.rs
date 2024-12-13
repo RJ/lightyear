@@ -53,6 +53,9 @@ impl Plugin for ExampleRendererPlugin {
                 (handle_connection, handle_disconnection).after(MainSet::Receive),
             );
             app.add_systems(OnEnter(NetworkingState::Disconnected), on_disconnect);
+
+            #[cfg(feature = "client")]
+            app.observe(on_update_status_message);
         }
 
         #[cfg(feature = "server")]
@@ -65,11 +68,36 @@ fn set_window_title(mut window: Query<&mut Window>, game_name: Res<GameName>) {
     window.title = format!("Lightyear Example: {}", game_name.0);
 }
 
-fn spawn_text(mut commands: Commands) {
-    commands.spawn(TextBundle::from_section(
-        "This is the Example Renderer!",
-        TextStyle::default(),
-    ));
+fn spawn_text(game_name: Res<GameName>, mut commands: Commands) {
+     commands
+        .spawn((
+           Pickable::IGNORE,
+           NodeBundle {
+            style: Style {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
+            ..default()
+        }))
+        .with_children(|parent| {
+            parent
+                .spawn(TextBundle::from_section(
+                    game_name.0.clone(),
+                    TextStyle {
+                        font_size: 30.0,
+                        color: Color::WHITE.with_alpha(0.05),
+                        ..default()
+                    },
+                ))
+                .insert(Style {
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::Center,
+                    ..default()
+                });
+        });
 }
 
 /// Spawns a text element that displays "Server"
@@ -92,6 +120,24 @@ fn spawn_server_text(mut commands: Commands) {
 }
 
 #[cfg(feature = "client")]
+#[derive(Event, Debug)]
+pub struct UpdateStatusMessage(pub String);
+
+#[cfg(feature = "client")]
+fn on_update_status_message(
+    trigger: Trigger<UpdateStatusMessage>,
+    mut q: Query<&mut Text, With<StatusMessageMarker>>,
+) {
+    for mut text in &mut q {
+        text.sections[0].value = trigger.event().0.clone();
+    }
+}
+
+#[cfg(feature = "client")]
+#[derive(Component)]
+struct StatusMessageMarker;
+
+#[cfg(feature = "client")]
 /// Create a button that allow you to connect/disconnect to a server
 pub(crate) fn spawn_connect_button(mut commands: Commands) {
     commands
@@ -110,6 +156,24 @@ pub(crate) fn spawn_connect_button(mut commands: Commands) {
             Pickable::IGNORE,
         ))
         .with_children(|parent| {
+            parent
+                .spawn((
+                    TextBundle::from_section(
+                        "Lightyear Example",
+                        TextStyle {
+                            font_size: 18.0,
+                            color: Color::srgb(0.9, 0.9, 0.9).with_alpha(0.4),
+                            ..default()
+                        },
+                    ),
+                    StatusMessageMarker,
+                ))
+                .insert(Style {
+                    padding: UiRect::all(Val::Px(10.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                });
             parent
                 .spawn((
                     ButtonBundle {
@@ -211,10 +275,14 @@ pub(crate) fn handle_connection(
 #[cfg(feature = "client")]
 /// Listen for events to know when the client is disconnected, and print out the reason
 /// of the disconnection
-pub(crate) fn handle_disconnection(mut events: EventReader<DisconnectEvent>) {
+pub(crate) fn handle_disconnection(
+    mut events: EventReader<DisconnectEvent>,
+    mut commands: Commands,
+) {
     for event in events.read() {
         let reason = &event.reason;
         error!("Disconnected from server: {:?}", reason);
+        commands.trigger(UpdateStatusMessage(format!("Disconnected: {:?}", reason)));
     }
 }
 

@@ -24,10 +24,16 @@ impl Plugin for BevygapSharedExtensionPlugin {
         );
 
         #[cfg(feature = "bevygap_client")]
-        app.add_systems(
-            Update,
-            on_server_metadata_changed.run_if(resource_changed::<ServerMetadata>),
-        );
+        {
+            app.add_systems(
+                Update,
+                (
+                    on_server_metadata_changed.run_if(resource_changed::<ServerMetadata>),
+                    on_bevygap_state_change
+                        .run_if(state_changed::<bevygap_client_plugin::BevygapClientState>),
+                ),
+            );
+        }
     }
 }
 
@@ -35,26 +41,21 @@ impl Plugin for BevygapSharedExtensionPlugin {
 #[derive(Channel)]
 pub struct ServerMetadataChannel;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Resource)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Resource)]
 pub struct ServerMetadata {
     pub location: String,
     pub fqdn: String,
     pub build_info: String,
 }
 
-impl Default for ServerMetadata {
-    fn default() -> Self {
-        Self {
-            location: "unknown location".to_string(),
-            fqdn: "unknown.example.com".to_string(),
-            build_info: "".to_string(),
-        }
-    }
-}
-
 #[cfg(feature = "bevygap_client")]
-fn on_server_metadata_changed(metadata: ResMut<ServerMetadata>) {
+fn on_server_metadata_changed(metadata: ResMut<ServerMetadata>, mut commands: Commands) {
     info!("Server metadata changed: {metadata:?}");
+    if metadata.fqdn.is_empty() {
+        return;
+    }
+    let msg = format!("{} in {}", metadata.fqdn, metadata.location);
+    commands.trigger(crate::renderer::UpdateStatusMessage(msg));
 }
 
 #[cfg(feature = "bevygap_server")]
@@ -67,4 +68,22 @@ fn update_server_metadata(
     metadata.location = context.location();
     info!("Updating server metadata: {metadata:?}");
     commands.replicate_resource::<ServerMetadata, ServerMetadataChannel>(NetworkTarget::All);
+}
+
+#[cfg(feature = "bevygap_client")]
+fn on_bevygap_state_change(
+    state: Res<State<bevygap_client_plugin::BevygapClientState>>,
+    mut commands: Commands,
+) {
+    use bevygap_client_plugin::BevygapClientState;
+
+    let msg = match state.get() {
+        BevygapClientState::Dormant => "Chrome only atm!".to_string(),
+        BevygapClientState::Request => "Making request...".to_string(),
+        BevygapClientState::AwaitingResponse(msg) => msg.clone(),
+        BevygapClientState::ReadyToConnect => "Ready!".to_string(),
+        BevygapClientState::Finished => "Finished connection setup.".to_string(),
+        BevygapClientState::Error(code, msg) => format!("ERR {code}: {msg}"),
+    };
+    commands.trigger(crate::renderer::UpdateStatusMessage(msg));
 }
