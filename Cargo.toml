@@ -5,7 +5,11 @@ members = [
   "macros",
   # internal
   "benches",
-  "examples/*",
+  #"examples/*",
+  "examples/common",
+  "examples/launcher",
+  "examples/simple_box",
+  "examples/spaceships",
 ]
 default-members = ["lightyear"]
 exclude = ["examples/certificates"]

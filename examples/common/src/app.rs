@@ -113,9 +113,9 @@ pub enum Apps {
 }
 
 impl Apps {
-    pub fn new(settings: Settings, cli: Cli) -> Self {
+    pub fn new(settings: Settings, cli: Cli, name: String) -> Self {
         #[allow(unused_mut)]
-        let mut apps = Apps::build(settings.clone(), cli);
+        let mut apps = Apps::build(settings.clone(), cli, name);
         // inject bevygap plugins
         #[cfg(feature = "bevygap_client")]
         {
@@ -138,7 +138,7 @@ impl Apps {
         apps
     }
     /// Build the apps with the given settings and CLI options.
-    fn build(settings: Settings, cli: Cli) -> Self {
+    fn build(settings: Settings, cli: Cli, name: String) -> Self {
         match cli {
             #[cfg(all(feature = "client", feature = "server"))]
             Cli::HostServer { client_id } => {
@@ -147,7 +147,7 @@ impl Apps {
                 };
                 let (mut app, client_config, server_config) =
                     combined_app(settings, vec![], client_net_config);
-                app.add_plugins(ExampleRendererPlugin);
+                app.add_plugins(ExampleRendererPlugin::new(name));
                 Apps::HostServer {
                     app,
                     client_config,
@@ -174,7 +174,7 @@ impl Apps {
                     transport_config,
                 );
                 let (mut client_app, client_config) = client_app(settings.clone(), net_config);
-                client_app.add_plugins(ExampleRendererPlugin);
+                client_app.add_plugins(ExampleRendererPlugin::new(name));
 
                 // create server app, which will be headless when we have client app in same process
                 let extra_transport_configs = vec![server::ServerTransport::Channels {
@@ -194,7 +194,7 @@ impl Apps {
                 #[allow(unused_mut)]
                 let (mut app, config) = server_app(settings, vec![]);
                 #[cfg(feature = "gui")]
-                app.add_plugins(ExampleRendererPlugin);
+                app.add_plugins(ExampleRendererPlugin::new(name));
                 Apps::Server { app, config }
             }
             #[cfg(feature = "client")]
@@ -207,7 +207,7 @@ impl Apps {
                 let client_id = client_id.unwrap_or(settings.client.client_id);
                 let net_config = get_client_net_config(&settings, client_id);
                 let (mut app, config) = client_app(settings, net_config);
-                app.add_plugins(ExampleRendererPlugin);
+                app.add_plugins(ExampleRendererPlugin::new(name));
                 Apps::Client { app, config }
             }
         }

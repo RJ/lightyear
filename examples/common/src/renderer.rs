@@ -8,16 +8,29 @@ use lightyear::prelude::{client::*, *};
 
 // TODO split into server/client renderer plugins?
 
-pub struct ExampleRendererPlugin;
+pub struct ExampleRendererPlugin {
+    /// The name of the example, which must also match the edgegap application name.
+    pub name: String,
+}
+
+impl ExampleRendererPlugin {
+    pub fn new(name: String) -> Self {
+        Self { name }
+    }
+}
+
+#[derive(Resource)]
+struct GameName(String);
 
 impl Plugin for ExampleRendererPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(DefaultPickingPlugins);
+        app.insert_resource(GameName(self.name.clone()));
         app.insert_resource(ClearColor::default());
         // TODO common shortcuts for enabling the egui world inspector etc.
         // TODO handle bevygap ui things.
         // TODO for clients, provide a "connect" button?
-        app.add_systems(Startup, spawn_text);
+        app.add_systems(Startup, (set_window_title, spawn_text));
 
         #[cfg(feature = "client")]
         {
@@ -25,7 +38,7 @@ impl Plugin for ExampleRendererPlugin {
             {
                 let bevygap_client_config = BevygapClientConfig {
                     matchmaker_url: crate::settings::get_matchmaker_url(),
-                    game_name: env!("CARGO_PKG_NAME").to_string(),
+                    game_name: self.name.clone(),
                     game_version: "1".to_string(),
                     ..default()
                 };
@@ -45,6 +58,11 @@ impl Plugin for ExampleRendererPlugin {
         #[cfg(feature = "server")]
         app.add_systems(Startup, spawn_server_text);
     }
+}
+
+fn set_window_title(mut window: Query<&mut Window>, game_name: Res<GameName>) {
+    let mut window = window.get_single_mut().unwrap();
+    window.title = format!("Lightyear Example: {}", game_name.0);
 }
 
 fn spawn_text(mut commands: Commands) {
