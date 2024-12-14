@@ -113,9 +113,7 @@ fn add_visual_interpolation_components<T: Component>(
         });
 }
 
-fn init_camera(mut commands: Commands, mut windows: Query<&mut Window>) {
-    let mut window = windows.single_mut();
-    window.resolution.set(800., 800.);
+fn init_camera(mut commands: Commands) {
     commands.spawn((
         Camera2dBundle {
             camera: Camera {
