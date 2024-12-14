@@ -14,10 +14,10 @@ COPY . .
 RUN mkdir /app/bins
 # Prepare launcher, to make edgegap configuration easier:
 RUN cd examples/launcher && cargo build --release && cp ../../target/release/launcher /app/bins/ 
-# For each example, build it and copy the binary and assets to the /app/bins dir
+# Build all the example servers in one cargo invocation for speed,
+# then for each example, copy the binary and assets to the /app/bins dir.
+RUN cargo build --release --no-default-features -F bevygap_server -p $(echo $example_list | sed 's/,/ -p /g')
 RUN set -e ; for example in $(echo $example_list | tr ',' ' ') ; do \
-    echo "building $example......" && \
-    cargo build --release --no-default-features -F bevygap_server -p $example && \
     mkdir -p /app/bins/$example && \
     cp /app/target/release/$example /app/bins/$example/ && \
     cp -r examples/$example/assets /app/bins/$example/ && \
