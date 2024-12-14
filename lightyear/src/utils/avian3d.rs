@@ -2,7 +2,7 @@
 use crate::prelude::client::{InterpolationSet, PredictionSet};
 use crate::shared::replication::delta::Diffable;
 use crate::shared::sets::{ClientMarker, InternalReplicationSet, ServerMarker};
-use avian3d::math::{Quaternion, Scalar};
+use avian3d::math::Scalar;
 use avian3d::prelude::*;
 use bevy::app::{App, FixedPostUpdate, Plugin};
 use bevy::math::Quat;
