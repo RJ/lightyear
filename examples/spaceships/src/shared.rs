@@ -166,14 +166,15 @@ pub fn apply_action_state_to_player_movement(
     aiq: &mut ApplyInputsQueryItem,
     tick: Tick,
 ) {
-    // if !action.get_pressed().is_empty() {
-    //     info!(
-    //         "🎹 {} {:?} {tick:?} = {:?} staleness = {staleness}",
-    //         if staleness > 0 { "😐" } else { "" },
-    //         aiq.player.client_id,
-    //         action.get_pressed(),
-    //     );
-    // }
+    #[cfg(target_family = "wasm")]
+    if !action.get_pressed().is_empty() {
+        info!(
+            "{} {:?} {tick:?} = {:?} staleness = {staleness}",
+            if staleness > 0 { "🎹😐" } else { "🎹" },
+            aiq.player.client_id,
+            action.get_pressed(),
+        );
+    }
 
     let ex_force = &mut aiq.ex_force;
     let rot = &aiq.rot;
