@@ -9,6 +9,12 @@ CARGO_RELEASE_DIR="$BASE_DIR/target/wasm32-unknown-unknown/release"
 export RUSTFLAGS=--cfg=web_sys_unstable_apis
 export CARGO_BUILD_TARGET=wasm32-unknown-unknown
 
+if [[ ! -z "$RUNNER_OS" ]]; then
+    # an attempt to get the github runner to not kill us due to resource usage
+    echo "Running on github runner, setting CARGO_BUILD_JOBS=1"
+    export CARGO_BUILD_JOBS=1
+fi
+
 # load "example_list" variable from .env file, shared with Dockerfile.server
 set -a
 source ./example_list.env
