@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # Run shellcheck on this after modifications.
 # Assuming this script is kept in the examples dir
 cd "$(dirname "$0")"
@@ -12,7 +12,8 @@ export CARGO_BUILD_TARGET=wasm32-unknown-unknown
 if [[ ! -z "$RUNNER_OS" ]]; then
     # an attempt to get the github runner to not kill us due to resource usage
     echo "Running on github runner, setting CARGO_BUILD_JOBS=1"
-    export CARGO_BUILD_JOBS=1
+    # runner has 4 cores, so let's try 3 concurrent jobs?
+    export CARGO_BUILD_JOBS=3
 fi
 
 # load "example_list" variable from .env file, shared with Dockerfile.server
