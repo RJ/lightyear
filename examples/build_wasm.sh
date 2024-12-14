@@ -39,13 +39,9 @@ export TARGET_CC
 echo "Using clang at $TARGET_CC"
 
 # we want to compile all examples in the list with one cargo command, which is much faster,
-# becayse it only builds the shared deps once.
-# build up a string of "-p example1 -p example2" etc to pass to cargo.
-p_args=""
-for example in $(echo $example_list | tr ',' ' ') ;
-do
-	p_args="$p_args -p $example"
-done
+# because it only builds the shared deps once.
+# make a string of "-p example1 -p example2" etc to pass to cargo.
+p_args="-p $(echo $example_list | sed 's/,/ -p /g')"
 
 echo "Building examples: $p_args"
 cargo build --release --no-default-features -F bevygap_client $p_args
