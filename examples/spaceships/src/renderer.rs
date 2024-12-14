@@ -43,6 +43,7 @@ impl Plugin for SpaceshipsRendererPlugin {
         let draw_shadows = false;
         // in an attempt to reduce flickering, draw walls before FixedUpdate runs
         // so they exist for longer during this tick.
+        // retained gizmos may help us in bevy 0.15?
         app.add_systems(PreUpdate, draw_walls);
 
         // draw last to ensure all the interpolation/syncing stuff has happened

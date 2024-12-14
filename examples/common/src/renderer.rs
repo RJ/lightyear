@@ -58,7 +58,7 @@ impl Plugin for ExampleRendererPlugin {
             app.observe(on_update_status_message);
         }
 
-        #[cfg(feature = "server")]
+        #[cfg(all(feature = "server", not(feature = "client")))]
         app.add_systems(Startup, spawn_server_text);
     }
 }
@@ -102,7 +102,7 @@ fn spawn_text(game_name: Res<GameName>, mut commands: Commands) {
 }
 
 /// Spawns a text element that displays "Server"
-#[cfg(feature = "server")]
+#[cfg(all(feature = "server", not(feature = "client")))]
 fn spawn_server_text(mut commands: Commands) {
     commands.spawn(
         TextBundle::from_section(
@@ -284,7 +284,7 @@ pub(crate) fn handle_disconnection(
         let reason = &event.reason;
         error!("Disconnected from server: {:?}", reason);
         let msg = match reason {
-            None => "Disconnected cleanly".to_string(),
+            None => "".to_string(), // clean.
             Some(reason) => format!("Disconnected: {:?}", reason),
         };
         commands.trigger(UpdateStatusMessage(msg));

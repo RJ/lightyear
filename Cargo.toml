@@ -6,6 +6,7 @@ members = [
   # internal
   "benches",
   #"examples/*",
+  "examples/avian_3d_character",
   "examples/common",
   "examples/launcher",
   "examples/simple_box",
