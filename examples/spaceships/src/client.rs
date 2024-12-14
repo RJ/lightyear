@@ -40,6 +40,7 @@ impl Plugin for ExampleClientPlugin {
                 handle_new_player,
             ),
         );
+        app.observe(on_add_player);
         app.add_systems(
             FixedUpdate,
             handle_hit_event
@@ -78,15 +79,30 @@ fn add_bullet_physics(
     }
 }
 
+/// to debug why we sometimes don't add the inputmap to our own player..
+fn on_add_player(
+    trigger: Trigger<OnAdd, Player>,
+    player_query: Query<(Entity, &Player, Has<Controlled>, Has<Predicted>)>,
+    // mut commands: Commands,
+    connection: Res<ClientConnection>,
+) {
+    info!("on_add_player, entity = {:?}", trigger.entity());
+    for (entity, player, is_controlled, is_predicted) in player_query.iter() {
+        info!("* player {entity:?} {player:?} controlled:{is_controlled} predicted:{is_predicted}");
+    }
+}
+
 /// Decorate newly connecting players with physics components
 /// ..and if it's our own player, set up input stuff
-#[allow(clippy::type_complexity)]
+/// // TODO possible race here? when keyboard input is ignored in chrome,
+/// it's because we got the ship replicated but without the Controlled component?
 fn handle_new_player(
     connection: Res<ClientConnection>,
     mut commands: Commands,
     mut player_query: Query<(Entity, &Player, Has<Controlled>), Added<Predicted>>,
 ) {
     for (entity, player, is_controlled) in player_query.iter_mut() {
+        info!("handle_new_player, entity = {entity:?} is_controlled = {is_controlled}");
         // is this our own entity?
         if is_controlled {
             info!("Own player replicated to us, adding inputmap {entity:?} {player:?}");
