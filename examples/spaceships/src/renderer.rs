@@ -41,13 +41,16 @@ impl Plugin for SpaceshipsRendererPlugin {
         app.insert_resource(ClearColor::default());
         // app.insert_resource(ClearColor(css::DARK_GRAY.into()));
         let draw_shadows = false;
+        // in an attempt to reduce flickering, draw walls before FixedUpdate runs
+        // so they exist for longer during this tick.
+        app.add_systems(PreUpdate, draw_walls);
+
         // draw last to ensure all the interpolation/syncing stuff has happened
         app.add_systems(
-            Last,
+            Update,
             (
                 add_player_label,
                 update_player_label,
-                draw_walls,
                 draw_confirmed_shadows.run_if(move || draw_shadows),
                 draw_predicted_entities,
                 draw_confirmed_entities.run_if(is_server),
