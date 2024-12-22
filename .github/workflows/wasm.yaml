@@ -1,4 +1,4 @@
-name: Build WASM frontend
+name: Build WASM frontend (examples)
 
 on:
   # temporary solution so i can trigger this on my fork, remove before merging

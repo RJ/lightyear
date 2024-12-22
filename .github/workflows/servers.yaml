@@ -1,4 +1,4 @@
-name: Build dockerized headless server for examples
+name: Build headless server (examples)
 
 on:
   # temporary solution so i can trigger this on my fork, remove before merging
