@@ -28,9 +28,9 @@ mod shared;
 pub const HOST_SERVER_PORT: u16 = 5050;
 
 fn main() {
-    let mut cli = Cli::default();
+    let cli = Cli::default();
     let settings_str = include_str!("../assets/settings.ron");
-    let mut settings = read_settings::<Settings>(settings_str);
+    let settings = read_settings::<Settings>(settings_str);
 
     // in this example, every client will actually launch in host-server mode
     // the reason is that we want every client to be able to be the 'host' of a lobby

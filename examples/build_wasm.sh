@@ -65,7 +65,7 @@ do
 done
 
 # TODO write a proper template for this:
-echo "<html><head><title>Lightyear Examples Menu</title></head><body>" > "$HTDOCS_DIR/index.html"
+echo "<html><head><title>Lightyear Examples Menu</title></head><body><h1>IN PROGRESS - expect breakage for now</h1>" > "$HTDOCS_DIR/index.html"
 
 for example in $(echo $example_list | tr ',' ' ') ; do
 	echo "<ul><a href=\"$example/\">$example</a></ul>" >> "$HTDOCS_DIR/index.html"
