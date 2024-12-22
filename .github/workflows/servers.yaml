@@ -1,6 +1,7 @@
-name: Build servers for examples
+name: Build dockerized headless server for examples
 
 on:
+  # temporary solution so i can trigger this on my fork, remove before merging
   pull_request:
 
   push:
@@ -16,6 +17,8 @@ on:
 
 jobs:
   build-servers:
+    # Only run on RJ's fork until everything is debugged and working properly
+    if: github.ref == 'refs/heads/main' && github.repository == 'RJ/lightyear'
     runs-on: ubuntu-latest
     environment: lightyear-examples
     permissions:
@@ -25,7 +28,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: 'examples'
+          ref: ${{ github.ref }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3

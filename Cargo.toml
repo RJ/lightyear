@@ -206,11 +206,17 @@ bevy_egui = { version = "0.31", default-features = false, features = [
 egui_extras = "=0.29"
 
 # bevygap for deploying on Edgegap
-bevygap_server_plugin = { git = "https://github.com/RJ/bevygap.git", rev = "041e2be874ec61fe7eb5b959a3eee8852b734ff3" }
-bevygap_client_plugin = { git = "https://github.com/RJ/bevygap.git", rev = "041e2be874ec61fe7eb5b959a3eee8852b734ff3" }
+bevygap_server_plugin = { git = "https://github.com/RJ/bevygap.git", rev = "01c1c0713c8aa6410e10648833b48d12335b9c34" }
+bevygap_client_plugin = { git = "https://github.com/RJ/bevygap.git", rev = "01c1c0713c8aa6410e10648833b48d12335b9c34" }
 
-# Make sure bevygap's lightyear dep is our exact version:
-[patch."https://github.com/cBournhonesque/lightyear.git"]
+# Make sure bevygap's lightyear dep is our exact version
+# otherwise bevygap's version of lightyear resources won't match our own, and bevygap will fail
+# to find lightyear resources it needs to modify.
+#
+# If bevygap uses a git dep on lightyear, we would say this:
+# [patch."https://github.com/cBournhonesque/lightyear.git"]
+# If bevygap uses a crates.io dep on lightyear, we would say this:
+[patch.crates-io]
 lightyear = { path = "./lightyear", version = "0.18" }
 
 [workspace.lints.clippy]
